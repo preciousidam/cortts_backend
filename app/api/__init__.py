@@ -1,0 +1,15 @@
+from fastapi import APIRouter
+from app.api.routes import auth
+from app.api.routes import project, upload, unit, payment, client, document, unit_agent_link
+
+api = APIRouter(prefix='/api/v1')
+
+api.include_router(auth.router, prefix="/auth", tags=["Auth"])
+api.include_router(project.router, prefix="/project", tags=["Project"])
+api.include_router(payment.router, prefix="/payment", tags=["Payment"])
+api.include_router(unit.router, prefix="/unit", tags=["Unit"])
+api.include_router(client.router, prefix="/client", tags=["Client"])
+api.include_router(document.router, prefix="/document", tags=["Document"])
+api.include_router(unit_agent_link.router, prefix="/unit/agent", tags=["Agent", "Unit"])
+api.include_router(unit_agent_link.router, prefix="/agent", tags=["Agent"])
+api.include_router(upload.router, prefix="/upload", tags=["Upload"])

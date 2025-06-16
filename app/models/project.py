@@ -1,0 +1,18 @@
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional
+from datetime import datetime,timezone
+from uuid import uuid4
+from app.models.timestamp_mixin import TimestampMixin
+
+class Project(SQLModel, TimestampMixin, table=True):
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    name: str = Field(index=True)
+    description: Optional[str] = None
+    address: str
+    num_units: int
+    purpose: Optional[str] = None
+    artwork_url: Optional[str] = None
+    deleted: bool = False
+    reason_for_delete: Optional[str] = None
+
+    units: list["Unit"] = Relationship(back_populates="project")
