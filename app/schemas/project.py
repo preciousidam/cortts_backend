@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 class ProjectCreate(BaseModel):
     name: str
@@ -11,7 +12,7 @@ class ProjectCreate(BaseModel):
     artwork_url: Optional[str] = None
 
 class ProjectRead(ProjectCreate):
-    id: str
+    id: UUID
     deleted: bool = False
     reason_for_delete: Optional[str] = None
     created_at: datetime

@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from uuid import UUID
 
 class PaymentStatus(str, Enum):
     paid = "paid"
@@ -23,6 +24,6 @@ class PaymentUpdate(BaseModel):
     status: Optional[PaymentStatus] = None
 
 class PaymentRead(PaymentBase):
-    id: str
+    id: UUID
     deleted: bool
     reason_for_delete: Optional[str]

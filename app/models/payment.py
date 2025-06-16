@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from enum import Enum
 from datetime import datetime
-from uuid import uuid4
+from uuid import uuid4, UUID
 from app.models.timestamp_mixin import TimestampMixin
 
 class PaymentStatus(str, Enum):
@@ -11,12 +11,12 @@ class PaymentStatus(str, Enum):
     over_due = "over due"
 
 class Payment(SQLModel, TimestampMixin, table=True):
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     amount: float
     due_date: datetime
     status: PaymentStatus = PaymentStatus.not_paid
     deleted: bool = False
     reason_for_delete: Optional[str] = None
 
-    unit_id: str = Field(foreign_key="unit.id")
+    unit_id: UUID = Field(foreign_key="unit.id")
     unit: Optional["Unit"] = Relationship(back_populates="payments")

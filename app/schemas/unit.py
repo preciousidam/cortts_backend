@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID
 
 class UnitBase(BaseModel):
     name: str
@@ -14,9 +15,9 @@ class UnitBase(BaseModel):
     payment_plan: bool = False
     handover_date: Optional[datetime] = None
     warranty_period: Optional[int] = 0
-    client_id: Optional[str] = None
-    property_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    client_id: Optional[UUID] = None
+    project_id: Optional[UUID] = None
+    agent_id: Optional[UUID] = None
     sales_rep: Optional[str] = None
 
 class UnitCreate(UnitBase):
@@ -34,9 +35,9 @@ class UnitUpdate(BaseModel):
     payment_plan: Optional[bool] = None
     handover_date: Optional[datetime] = None
     warranty_period: Optional[int] = None
-    client_id: Optional[str] = None
-    property_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    client_id: Optional[UUID] = None
+    project_id: Optional[UUID] = None
+    agent_id: Optional[UUID] = None
     sales_rep: Optional[str] = None
 
 class PaymentSummary(BaseModel):
@@ -52,7 +53,7 @@ class PaymentSummary(BaseModel):
     installment_diff: float
 
 class UnitRead(UnitBase):
-    id: str
+    id: UUID
     deleted: bool
     reason_for_delete: Optional[str]
     warranty: Optional[dict]

@@ -1,13 +1,14 @@
 from sqlmodel import SQLModel
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 
 # Document Template
 class DocumentTemplateBase(SQLModel):
     name: str
     link: str
-    unit_id: str
+    unit_id: UUID
 
 
 class DocumentTemplateCreate(DocumentTemplateBase):
@@ -15,7 +16,7 @@ class DocumentTemplateCreate(DocumentTemplateBase):
 
 
 class DocumentTemplateRead(DocumentTemplateBase):
-    id: str
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
@@ -24,9 +25,9 @@ class DocumentTemplateRead(DocumentTemplateBase):
 class SignedDocumentBase(SQLModel):
     name: str
     link: str
-    unit_id: str
-    client_id: Optional[str] = None
-    agent_id: Optional[str] = None
+    unit_id: UUID
+    client_id: Optional[UUID] = None
+    agent_id: Optional[UUID] = None
 
 
 class SignedDocumentCreate(SignedDocumentBase):
@@ -34,6 +35,6 @@ class SignedDocumentCreate(SignedDocumentBase):
 
 
 class SignedDocumentRead(SignedDocumentBase):
-    id: str
+    id: UUID
     created_at: datetime
     updated_at: datetime

@@ -17,7 +17,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     installment: int
     payment_plan: bool = False
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
-    property_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
+    project_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
     handover_date: Optional[datetime] = None
     deleted: bool = False
     reason_for_delete: Optional[str] = None

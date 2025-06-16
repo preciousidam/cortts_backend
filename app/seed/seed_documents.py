@@ -2,16 +2,15 @@ from sqlmodel import Session, select
 from app.db.session import engine
 from app.models.document import DocumentTemplate, SignedDocument
 from app.models.unit import Unit
-from app.models.client import Client
-from app.models.agent import Agent
+from app.models.user import User, Role
 from datetime import datetime, timezone
 
 
 def seed_documents():
     with Session(engine) as session:
         unit = session.exec(select(Unit)).first()
-        client = session.exec(select(Client)).first()
-        agent = session.exec(select(Agent)).first()
+        client = session.exec(select(User).where(User.role == Role.CLIENT)).first()
+        agent = session.exec(select(User).where(User.role == Role.AGENT)).first()
 
         if unit:
             template = DocumentTemplate(

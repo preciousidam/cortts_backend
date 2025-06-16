@@ -1,11 +1,11 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
 from datetime import datetime,timezone
-from uuid import uuid4
+from uuid import uuid4, UUID
 from app.models.timestamp_mixin import TimestampMixin
 
 class Project(SQLModel, TimestampMixin, table=True):
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(index=True)
     description: Optional[str] = None
     address: str

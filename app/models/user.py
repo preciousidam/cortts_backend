@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 from enum import Enum
 from datetime import datetime, timezone
 
@@ -10,7 +10,7 @@ class Role(str, Enum):
     CLIENT = "client"
 
 class User(SQLModel, table=True):
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
     fullname: str
     email: str = Field(index=True, unique=True)
     phone: str = Field(index=True, unique=True)
@@ -23,7 +23,7 @@ class User(SQLModel, table=True):
     verification_code: Optional[str] = None
     commission_rate: Optional[float] = None
     is_internal: Optional[bool] = None
-    created_by: Optional[str] = Field(default=None, foreign_key="user.id")
+    created_by: Optional[UUID] = Field(default=None, foreign_key="user.id")
 
     # As a client (owns one or more units)
     units: list["Unit"] = Relationship(back_populates="client")

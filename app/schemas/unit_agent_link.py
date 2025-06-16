@@ -4,11 +4,12 @@ from datetime import datetime
 from pydantic import BaseModel
 from datetime import datetime
 from app.models.unit_agent_link import AgentRole
+from uuid import UUID
 
 
 class UnitAgentLinkBase(SQLModel):
-    unit_id: str
-    agent_id: str
+    unit_id: UUID
+    agent_id: UUID
     role: str
 
 
@@ -19,9 +20,9 @@ class UnitAgentLinkCreate(UnitAgentLinkBase):
 
 
 class UnitAgentLinkRead(BaseModel):
-    id: str
-    unit_id: str
-    agent_id: str
+    id: UUID
+    unit_id: UUID
+    agent_id: UUID
     role: AgentRole
     created_at: datetime
     updated_at: datetime

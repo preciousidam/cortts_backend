@@ -1,7 +1,7 @@
 from sqlmodel import Session
 from app.db.session import engine
 from app.models.unit import Unit
-from app.models.unit_agent_link import UnitAgentLink
+from app.models.unit_agent_link import UnitAgentLink, AgentRole
 from app.models.project import Project
 from app.models.user import User, Role
 from datetime import datetime, timezone
@@ -70,7 +70,7 @@ def seed():
             purchase_date=datetime.now(timezone.utc),
             installment=6,
             payment_plan=True,
-            property_id=project.id,
+            project_id=project.id,
             client_id=client.id
         )
         session.add(unit)
@@ -78,8 +78,8 @@ def seed():
 
         # Unit-Agent Links
         session.add_all([
-            UnitAgentLink(unit_id=unit.id, agent_id=internal_agent.id, role="sales_rep"),
-            UnitAgentLink(unit_id=unit.id, agent_id=external_agent.id, role="external_agent"),
+            UnitAgentLink(unit_id=unit.id, agent_id=internal_agent.id, role=AgentRole.sales_rep),
+            UnitAgentLink(unit_id=unit.id, agent_id=external_agent.id, role=AgentRole.external_agent),
         ])
         session.commit()
 

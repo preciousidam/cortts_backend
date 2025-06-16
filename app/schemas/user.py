@@ -10,7 +10,7 @@ from app.models.user import Role
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
-    role: Role = Role.CLIENT
+    role: Optional[Role] = Role.CLIENT
     created_by: Optional[str] = None
 
 class LoginResponse(BaseModel):
@@ -34,7 +34,7 @@ class UserCreate(UserBase):
     password: str
 
 class UserRead(UserBase):
-    id: str
+    id: UUID
     is_verified: bool
     created_at: datetime
     updated_at: datetime

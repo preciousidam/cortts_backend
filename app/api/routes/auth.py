@@ -11,7 +11,8 @@ router = APIRouter()
 
 @router.post("/register")
 def register(data: RegisterRequest, session: Session = Depends(get_session)):
-    user = create_user(session, data.email, data.password, data.role, data.created_by)
+    role = data.role if data.role is not None else Role.CLIENT
+    user = create_user(session, data)
     return {
         "message": "Check your email for verification code",
         "user_id": user.id,
