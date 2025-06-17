@@ -2,19 +2,25 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
+from enum import Enum
 from app.models.timestamp_mixin import TimestampMixin
+
+class PaymentStatus(str, Enum):
+    PAID = "paid"
+    NOT_PAID = "not_paid"
+    OVERDUE = "overdue"
 
 
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
     amount: float
-    initial_payment: float
+    expected_initial_payment: float
     discount: float = 0.0
     comments: Optional[str] = None
     type: Optional[str] = None
     purchase_date: datetime
-    installment: int
+    installment: int = 1
     payment_plan: bool = False
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     project_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
@@ -36,19 +42,18 @@ class Unit(SQLModel, TimestampMixin, table=True):
 
     @property
     def payment_summary(self) -> Dict[str, Any]:
-        total = self.amount - (self.discount or 0)
-        outstanding = total - self.initial_payment
-        total_deposit = self.initial_payment
-        total_sch = self.installment or 1
-        installment_amount = round(outstanding / total_sch, 2)
+        total = self.amount - self.discount
+        total_deposit = self.total_paid
+        outstanding = total - total_deposit
+        total_sch = self.installment
+        installment_amount = round(max(outstanding, 0) / total_sch, 2)
 
         percentage_paid = round((total_deposit / total) * 100, 2) if total else 0
-        percentage_unpaid = 100 - percentage_paid
-        balanced = outstanding == 0
+        percentage_unpaid = max(0, 100 - percentage_paid)
+        balanced = outstanding <= 0
         more_or_less = "equal"
         installment_diff = 0.0
 
-        # logic for over/underpayment
         if outstanding < 0:
             more_or_less = "overpaid"
             installment_diff = abs(outstanding)
@@ -74,9 +79,13 @@ class Unit(SQLModel, TimestampMixin, table=True):
         if not self.installment:
             return []
         total = self.amount - self.discount
-        balance = total - self.initial_payment
+        balance = total - self.expected_initial_payment
         monthly_payment = balance / self.installment
         return [
             {"month": i + 1, "amount": round(monthly_payment, 2)}
             for i in range(self.installment)
         ]
+    
+    @property
+    def total_paid(self):
+        return sum(p.amount for p in self.payments if p.status == PaymentStatus.PAID)

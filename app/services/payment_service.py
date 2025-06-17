@@ -1,8 +1,11 @@
 from sqlmodel import Session, select
 from app.models.payment import Payment
+from uuid import UUID
 
 def create_payment(session: Session, data):
-    payment = Payment(**data.model_dump())
+    data_dict = data.model_dump()
+    data_dict["unit_id"] = UUID(data_dict["unit_id"])  # ensure UUID type
+    payment = Payment(**data_dict)
     session.add(payment)
     session.commit()
     session.refresh(payment)

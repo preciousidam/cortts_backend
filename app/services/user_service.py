@@ -11,7 +11,7 @@ def create_user(session: Session, data: Union[UserCreate, RegisterRequest]):
     email = getattr(data, "email", None)
     phone = getattr(data, "phone", None)
     # If missing, raise error
-    if not fullname or not email or not phone:
+    if not fullname or not email:
         raise ValueError("fullname, email, and phone are required.")
     code = str(random.randint(100000, 999999))
     user = User(

@@ -1,8 +1,8 @@
 """auto
 
-Revision ID: 2aafdf82fc7c
+Revision ID: 6e0eabb6f16c
 Revises: 
-Create Date: 2025-06-16 15:29:02.991057
+Create Date: 2025-06-17 10:50:49.256957
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2aafdf82fc7c'
+revision: str = '6e0eabb6f16c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -41,7 +41,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('fullname', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('phone', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('phone', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('role', sa.Enum('ADMIN', 'AGENT', 'CLIENT', name='role'), nullable=False),
@@ -51,7 +51,7 @@ def upgrade() -> None:
     sa.Column('verification_code', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('commission_rate', sa.Float(), nullable=True),
     sa.Column('is_internal', sa.Boolean(), nullable=True),
-    sa.Column('created_by', sa.Uuid(), nullable=False),
+    sa.Column('created_by', sa.Uuid(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -63,7 +63,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
-    sa.Column('initial_payment', sa.Float(), nullable=False),
+    sa.Column('expected_initial_payment', sa.Float(), nullable=False),
     sa.Column('discount', sa.Float(), nullable=False),
     sa.Column('comments', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('type', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
@@ -82,7 +82,7 @@ def upgrade() -> None:
     op.create_table('documenttemplate',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('link', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
@@ -94,10 +94,10 @@ def upgrade() -> None:
     op.create_table('payment',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
     sa.Column('due_date', sa.DateTime(), nullable=False),
-    sa.Column('status', sa.Enum('paid', 'not_paid', 'over_due', name='paymentstatus'), nullable=False),
+    sa.Column('status', sa.Enum('PAID', 'NOT_PAID', 'OVERDUE', name='paymentstatus'), nullable=False),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.Column('reason_for_delete', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
@@ -107,12 +107,12 @@ def upgrade() -> None:
     op.create_table('signeddocument',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('link', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
-    sa.Column('client_id', sa.Uuid(), nullable=False),
-    sa.Column('agent_id', sa.Uuid(), nullable=False),
+    sa.Column('client_id', sa.Uuid(), nullable=True),
+    sa.Column('agent_id', sa.Uuid(), nullable=True),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.Column('reason_for_delete', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.ForeignKeyConstraint(['agent_id'], ['user.id'], ),
@@ -123,7 +123,7 @@ def upgrade() -> None:
     op.create_table('unitagentlink',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
     sa.Column('agent_id', sa.Uuid(), nullable=False),
     sa.Column('role', sa.Enum('sales_rep', 'external_agent', name='agentrole'), nullable=False),

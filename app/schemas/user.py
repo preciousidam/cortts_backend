@@ -10,6 +10,8 @@ from app.models.user import Role
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    fullname: str
+    phone: str | None = None
     role: Optional[Role] = Role.CLIENT
     created_by: Optional[str] = None
 

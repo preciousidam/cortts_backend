@@ -2,6 +2,7 @@ from sqlmodel import Session
 from app.db.session import engine
 from app.models.unit import Unit
 from app.models.unit_agent_link import UnitAgentLink, AgentRole
+from app.models.payment import Payment, PaymentStatus
 from app.models.project import Project
 from app.models.user import User, Role
 from datetime import datetime, timezone
@@ -63,7 +64,7 @@ def seed():
         unit = Unit(
             name="Terrace B4",
             amount=45000000.00,
-            initial_payment=5000000.00,
+            expected_initial_payment=5000000.00,
             discount=0.0,
             comments="Test unit",
             type="Terrace",
@@ -74,6 +75,15 @@ def seed():
             client_id=client.id
         )
         session.add(unit)
+        session.commit()
+
+        payment = Payment(
+            amount=5000000.0,
+            due_date=datetime.now(timezone.utc),
+            status=PaymentStatus.PAID,
+            unit_id=unit.id,
+        )
+        session.add(payment)
         session.commit()
 
         # Unit-Agent Links

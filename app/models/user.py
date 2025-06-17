@@ -13,7 +13,7 @@ class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     fullname: str
     email: str = Field(index=True, unique=True)
-    phone: str = Field(index=True, unique=True)
+    phone: str | None = Field(index=True, unique=True)
     hashed_password: str
     address: Optional[str] = None
     role: Role = Field(default=Role.CLIENT)

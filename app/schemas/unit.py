@@ -6,7 +6,7 @@ from uuid import UUID
 class UnitBase(BaseModel):
     name: str
     amount: float
-    initial_payment: float
+    expected_initial_payment: float
     discount: Optional[float] = 0
     comments: Optional[str] = None
     type: Optional[str] = None
@@ -26,7 +26,7 @@ class UnitCreate(UnitBase):
 class UnitUpdate(BaseModel):
     name: Optional[str] = None
     amount: Optional[float] = None
-    initial_payment: Optional[float] = None
+    expected_initial_payment: Optional[float] = None
     discount: Optional[float] = None
     comments: Optional[str] = None
     type: Optional[str] = None
@@ -38,7 +38,7 @@ class UnitUpdate(BaseModel):
     client_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
     agent_id: Optional[UUID] = None
-    sales_rep: Optional[str] = None
+    sales_rep: Optional[UUID] = None
 
 class PaymentSummary(BaseModel):
     outstanding: float
@@ -52,13 +52,22 @@ class PaymentSummary(BaseModel):
     total_sch: float
     installment_diff: float
 
+class GraphDataPoint(BaseModel):
+    month: int
+    amount: float
+
 class UnitRead(UnitBase):
     id: UUID
     deleted: bool
     reason_for_delete: Optional[str]
     warranty: Optional[dict]
     payment_summary: Optional[PaymentSummary]
-    graph_data: Optional[list[dict]]
+    graph_data: Optional[list[GraphDataPoint]]
+    total_paid: float = 0
+    expected_initial_payment: float
+    created_at: datetime
+    updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

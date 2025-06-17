@@ -38,3 +38,6 @@ seed-docs:
 
 seed-all:
 	make seed && make seed-docs
+
+test:
+	PYTHONPATH=$(PYTHONPATH) python -m pytest -v

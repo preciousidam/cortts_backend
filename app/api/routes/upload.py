@@ -1,13 +1,15 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Depends
 import uuid
 import os
+from app.auth.dependencies import get_current_user
+from app.models.user import Role
 
 router = APIRouter()
 
 UPLOAD_DIR = "uploaded_artworks"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-@router.post("/upload-artwork/")
+@router.post("/upload-artwork/", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
 async def upload_artwork(file: UploadFile = File(...)):
     ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
