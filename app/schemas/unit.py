@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+from app.models.unit_agent_link import AgentRole
+class AgentAssignment(BaseModel):
+    agent_id: UUID
+    role: AgentRole
 
 class UnitBase(BaseModel):
     name: str
@@ -21,7 +25,7 @@ class UnitBase(BaseModel):
     sales_rep: Optional[str] = None
 
 class UnitCreate(UnitBase):
-    pass
+    agents: list[AgentAssignment] | None = []
 
 class UnitUpdate(BaseModel):
     name: Optional[str] = None
@@ -39,6 +43,7 @@ class UnitUpdate(BaseModel):
     project_id: Optional[UUID] = None
     agent_id: Optional[UUID] = None
     sales_rep: Optional[UUID] = None
+    agents: list[AgentAssignment] | None = None
 
 class PaymentSummary(BaseModel):
     outstanding: float

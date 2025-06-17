@@ -2,10 +2,12 @@ from sqlmodel import Session, select
 from app.models.unit import Unit
 from app.models.payment import Payment, PaymentStatus
 from app.models.user import User, Role
+from app.models import UnitAgentLink
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 import math
 from uuid import UUID
+from app.core.config import settings
 
 def create_unit(session: Session, data):
 
@@ -44,6 +46,17 @@ def create_unit(session: Session, data):
             ))
         session.commit()
 
+    if data.agents:
+        for agent in data.agents:
+            session.add(UnitAgentLink(
+                unit_id=unit.id,
+                agent_id=agent.agent_id,
+                role=agent.role
+            ))
+        session.commit()
+
+    session.refresh(unit)
+
     return unit
 
 def get_all_units(session: Session):
@@ -76,6 +89,24 @@ def update_unit(session: Session, unit_id: UUID, data):
         for field in ["expected_initial_payment", "installment", "amount"]
     ) and unit.payment_plan:
         recalculate_payments(session, unit)
+
+    if hasattr(data, "agents") and data.agents is not None:
+        # Remove old links
+        links = session.exec(select(UnitAgentLink).where(UnitAgentLink.unit_id == unit_id)).all()
+        for link in links:
+            session.delete(link)
+        
+        session.commit()
+
+        # Add new links
+        for agent in data.agents:
+            session.add(UnitAgentLink(
+                unit_id=unit.id,
+                agent_id=agent.agent_id,
+                role=agent.role
+            ))
+        session.commit()
+    
     return unit
 
 
