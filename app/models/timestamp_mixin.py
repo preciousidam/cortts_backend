@@ -9,3 +9,6 @@ class TimestampMixin:
     updated_at: Optional[datetime] = Field(
         default_factory=lambda: datetime.now(timezone.utc), nullable=False
     )
+    deleted_at: Optional[datetime] = Field(
+        default=None, nullable=True
+    )

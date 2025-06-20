@@ -26,18 +26,25 @@ run:
 clean:
 	find . -type d -name __pycache__ -exec rm -r {} +
 
+tree:
+	@echo "Directory structure:"
+	@tree -I '__pycache__|*.pyc|*.pyo|*.pyd|venv|.venv|.git|node_modules|dist|build|*.egg-info' -L 10 > tree.txt
+
 # Test DB connection
 check-db:
 	PYTHONPATH=$(PYTHONPATH) python -c "from app.db.session import engine; print(engine.connect())"
 
-seed:
+seed-unit-agent-client:
 	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_unit_agent.py
 
 seed-docs:
 	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_documents.py
 
+seed-admin:
+	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_admin.py
+
 seed-all:
-	make seed && make seed-docs
+	make seed-admin && make seed-unit-agent-client && make seed-docs
 
 test:
 	PYTHONPATH=$(PYTHONPATH) python -m pytest -v

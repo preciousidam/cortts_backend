@@ -1,13 +1,14 @@
-from sqlmodel import Session, select
+from uuid import UUID
+from sqlmodel import Session, select, func
 from app.models.unit import Unit
 from app.models.payment import Payment, PaymentStatus
+from app.schemas.paging import Paging
 from app.models.user import User, Role
 from app.models import UnitAgentLink
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-import math
-from uuid import UUID
 from app.core.config import settings
+from app.utility.paging import paginate
 
 def create_unit(session: Session, data):
 
@@ -59,8 +60,11 @@ def create_unit(session: Session, data):
 
     return unit
 
-def get_all_units(session: Session):
-    return session.exec(select(Unit).where(Unit.deleted == False)).all()
+def get_all_units(session: Session, paging: Paging):
+    query = select(Unit).where(Unit.deleted == False)
+    units, total = paginate(session, query, paging)
+    
+    return {"data": units, "total": total}
 
 def get_unit_by_id(session: Session, unit_id: UUID):
     return session.get(Unit, unit_id)

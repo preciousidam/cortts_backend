@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME:  Optional[str] = Field(default=None, alias="R2_BUCKET_NAME")
     R2_ENDPOINT_URL:  Optional[str] = Field(default=None, alias="R2_ENDPOINT_URL")
     R2_ACCESS_TOKEN:  Optional[str] = Field(default=None, alias="R2_ACCESS_TOKEN")
+    R2_PUBLIC_URL:  Optional[str] = Field(default=None, alias="R2_PUBLIC_URL")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra="forbid")
 

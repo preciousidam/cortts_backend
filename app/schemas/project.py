@@ -33,3 +33,7 @@ class ProjectReplace(BaseModel):
     num_units: int
     purpose: Optional[str] = None
     artwork_url: Optional[str] = None
+
+class ProjectList(BaseModel):
+    data: list[ProjectRead]
+    total: int

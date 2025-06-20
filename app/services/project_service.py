@@ -2,6 +2,9 @@ from sqlmodel import Session, select
 from app.models.project import Project
 from datetime import datetime, timezone
 
+from app.schemas.paging import Paging
+from app.utility.paging import paginate
+
 def create_project(session: Session, data):
     project = Project(**data.model_dump())
     session.add(project)
@@ -9,8 +12,11 @@ def create_project(session: Session, data):
     session.refresh(project)
     return project
 
-def get_all_projects(session: Session):
-    return session.exec(select(Project).where(Project.deleted == False)).all()
+def get_all_projects(session: Session, paging: Paging):
+    query = select(Project).where(Project.deleted == False)
+    projects, total = paginate(session, query, paging)
+    
+    return {"data": projects, "total": total}
 
 def get_project_by_id(session: Session, project_id: str):
     return session.get(Project, project_id)

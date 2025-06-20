@@ -74,7 +74,21 @@ def seed():
             project_id=project.id,
             client_id=client.id
         )
-        session.add(unit)
+
+        unit2 = Unit(
+            name="Semi-Detached A1",
+            amount=60000000.00,
+            expected_initial_payment=7000000.00,
+            discount=0.0,
+            comments="Another test unit",
+            type="Semi-Detached",
+            purchase_date=datetime.now(timezone.utc),
+            installment=12,
+            payment_plan=True,
+            project_id=project.id,
+            client_id=client.id
+        )
+        session.add_all([unit, unit2])
         session.commit()
 
         payment = Payment(

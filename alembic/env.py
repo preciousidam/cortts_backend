@@ -20,7 +20,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from sqlmodel import SQLModel
 from app.core.config import settings
-from app.models import Unit, Payment, Project, User, UnitAgentLink, SignedDocument, DocumentTemplate  # Required to register the table
+from app.models import Unit, Payment, Project, User, UnitAgentLink, SignedDocument, DocumentTemplate, MediaFile, Notification, PushToken  # Required to register the table
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,

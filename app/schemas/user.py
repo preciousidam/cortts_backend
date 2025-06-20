@@ -31,6 +31,8 @@ class UserBase(BaseModel):
     commission_rate: Optional[float] = None
     is_internal: Optional[bool] = None
     created_by: Optional[str] = None
+    is_active: Optional[bool] = True
+    
 
 class UserCreate(UserBase):
     password: str
@@ -40,3 +42,20 @@ class UserRead(UserBase):
     is_verified: bool
     created_at: datetime
     updated_at: datetime
+
+class UserUpdate(BaseModel):
+    fullname: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    role: Optional[Role] = None
+    commission_rate: Optional[float] = None
+    is_internal: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    created_by: Optional[str] = None
+    is_active: Optional[bool] = None
+    reason_for_delete: Optional[str] = None
+
+class UserList(BaseModel):
+    data: list[UserRead]
+    total: int

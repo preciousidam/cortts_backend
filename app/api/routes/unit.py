@@ -1,12 +1,14 @@
+from uuid import UUID
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
-from uuid import UUID
 from app.db.session import get_session
 from app.services.unit_service import (
     create_unit, get_all_units, get_unit_by_id, update_unit,
     soft_delete_unit, warranty_info, payment_summary, graph_data
 )
-from app.schemas.unit import UnitCreate, UnitUpdate, UnitRead, PaymentSummary, GraphDataPoint
+from app.schemas.unit import UnitCreate, UnitUpdate, UnitRead, PaymentSummary, GraphDataPoint, ReadAllUnits
+from app.schemas.paging import Paging
 from app.auth.dependencies import get_current_user
 from app.models.user import Role
 
@@ -16,9 +18,9 @@ router = APIRouter()
 def create(data: UnitCreate, session: Session = Depends(get_session)):
     return create_unit(session, data)
 
-@router.get("/", response_model=list[UnitRead], dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
-def all_units(session: Session = Depends(get_session)):
-    return get_all_units(session)
+@router.get("/", response_model=ReadAllUnits, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+def all_units(paging: Paging = Depends(), session: Session = Depends(get_session)):
+    return get_all_units(session, paging)
 
 @router.get("/{unit_id}", response_model=UnitRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
 def get(unit_id: UUID, session: Session = Depends(get_session)):

@@ -4,22 +4,41 @@ from uuid import uuid4, UUID
 from datetime import datetime, timezone
 from app.models.timestamp_mixin import TimestampMixin
 
+class MediaFile(SQLModel, TimestampMixin, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    file_type: str
+    file_name: str
+    file_path: str
+    file_size: int
+    deleted: bool = False
+    uploaded_by: Optional[UUID] = Field(default=None, foreign_key="user.id")
+    uploader: Optional["User"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
 
 class DocumentTemplate(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
-    link: str
+    media_file_id: UUID = Field(foreign_key="mediafile.id")
     unit_id: UUID = Field(foreign_key="unit.id")
     deleted: bool = False
     reason_for_delete: Optional[str] = None
+    media_file: Optional[MediaFile] = Relationship(sa_relationship_kwargs={"lazy": "joined"})
+    unit: Optional["Unit"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
 
 
 class SignedDocument(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
-    link: str
+    media_file_id: UUID = Field(foreign_key="mediafile.id")
     unit_id: UUID = Field(foreign_key="unit.id")
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     agent_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     deleted: bool = False
     reason_for_delete: Optional[str] = None
+    media_file: Optional[MediaFile] = Relationship(sa_relationship_kwargs={"lazy": "joined"})
+    unit: Optional["Unit"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )

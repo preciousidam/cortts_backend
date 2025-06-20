@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.db.session import get_session
+from app.schemas.paging import Paging
 from app.services.payment_service import (
     create_payment, get_all_payments, get_payment_by_id, update_payment, soft_delete_payment
 )
@@ -15,8 +16,8 @@ def create(data: PaymentCreate, session: Session = Depends(get_session)):
     return create_payment(session, data)
 
 @router.get("/", response_model=list[PaymentRead], dependencies=[Depends(get_current_user([Role.ADMIN]))])
-def all(session: Session = Depends(get_session)):
-    return get_all_payments(session)
+def all(paging: Paging = Depends(), session: Session = Depends(get_session)):
+    return get_all_payments(session, paging)
 
 @router.get("/{payment_id}", response_model=PaymentRead, dependencies=[Depends(get_current_user([Role.ADMIN]))])
 def get(payment_id: str, session: Session = Depends(get_session)):

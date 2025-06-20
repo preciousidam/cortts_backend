@@ -1,21 +1,32 @@
 from fastapi import APIRouter, UploadFile, File, Depends
 import uuid
 import os
+
+from sqlmodel import Session
 from app.auth.dependencies import get_current_user
-from app.models.user import Role
+from app.db.session import get_session
+from app.models.user import Role, User
+from app.schemas.media import MediaFileReadSchema
+from app.services.upload_service import create_media_file, download_media_file, get_all_media_files, get_media_file
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploaded_artworks"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+@router.post("/upload-media/", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def upload_media(file: UploadFile = File(...), current_user: User = Depends(get_current_user()), session: Session = Depends(get_session)):
 
-@router.post("/upload-artwork/", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
-async def upload_artwork(file: UploadFile = File(...)):
-    ext = os.path.splitext(file.filename)[1]
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    return create_media_file(session, current_user.id, file)
 
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
 
-    return {"filename": filename, "url": f"/{UPLOAD_DIR}/{filename}"}
+@router.get("/media", response_model=list[MediaFileReadSchema], dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def get_all_media(session: Session = Depends(get_session)):
+    return get_all_media_files(session)
+
+
+@router.get("/media/{media_id}", response_model=MediaFileReadSchema, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def get_media(media_id: uuid.UUID, session: Session = Depends(get_session)):
+    return get_media_file(session, media_id)
+
+
+@router.get("/media/download/{media_id}", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def download_media(media_id: uuid.UUID, session: Session = Depends(get_session)):
+    return download_media_file(session, media_id)

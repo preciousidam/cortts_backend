@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.db.session import get_session
+from app.schemas.paging import Paging
 from app.services.project_service import (
     create_project, get_all_projects, get_project_by_id,
     soft_delete_project, update_project, replace_project
 )
 from app.schemas.project import (
-    ProjectCreate, ProjectRead, ProjectUpdate, ProjectReplace
+    ProjectCreate, ProjectList, ProjectRead, ProjectUpdate, ProjectReplace
 )
 from app.auth.dependencies import get_current_user
 from app.models.user import Role
@@ -17,9 +18,9 @@ router = APIRouter()
 def create(data: ProjectCreate, session: Session = Depends(get_session)):
     return create_project(session, data)
 
-@router.get("/", response_model=list[ProjectRead], dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
-def get_all(session: Session = Depends(get_session)):
-    return get_all_projects(session)
+@router.get("/", response_model=ProjectList, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+def get_all(paging: Paging = Depends(), session: Session = Depends(get_session)):
+    return get_all_projects(session, paging)
 
 @router.get("/{project_id}", response_model=ProjectRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
 def get_by_id(project_id: str, session: Session = Depends(get_session)):

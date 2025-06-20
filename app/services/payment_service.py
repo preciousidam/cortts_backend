@@ -2,6 +2,9 @@ from sqlmodel import Session, select
 from app.models.payment import Payment
 from uuid import UUID
 
+from app.schemas.paging import Paging
+from app.utility.paging import paginate
+
 def create_payment(session: Session, data):
     data_dict = data.model_dump()
     data_dict["unit_id"] = UUID(data_dict["unit_id"])  # ensure UUID type
@@ -11,8 +14,11 @@ def create_payment(session: Session, data):
     session.refresh(payment)
     return payment
 
-def get_all_payments(session: Session):
-    return session.exec(select(Payment).where(Payment.deleted == False)).all()
+def get_all_payments(session: Session, paging: Paging):
+    query = select(Payment).where(Payment.deleted == False)
+    payments, total = paginate(session, query, paging)
+    
+    return {"data": payments, "total": total}
 
 def get_payment_by_id(session: Session, payment_id: str):
     return session.get(Payment, payment_id)

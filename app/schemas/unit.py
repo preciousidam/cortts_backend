@@ -60,12 +60,14 @@ class PaymentSummary(BaseModel):
 class GraphDataPoint(BaseModel):
     month: int
     amount: float
-
+class WarrantyInfo(BaseModel):
+    isValid: bool = False
+    expire_at: Optional[str] = None
 class UnitRead(UnitBase):
     id: UUID
     deleted: bool
     reason_for_delete: Optional[str]
-    warranty: Optional[dict]
+    warranty: Optional[WarrantyInfo]
     payment_summary: Optional[PaymentSummary]
     graph_data: Optional[list[GraphDataPoint]]
     total_paid: float = 0
@@ -76,3 +78,7 @@ class UnitRead(UnitBase):
     model_config = {
         "from_attributes": True
     }
+
+class ReadAllUnits(BaseModel):
+    data: List[UnitRead]
+    total: int

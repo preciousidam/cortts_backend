@@ -1,8 +1,8 @@
 """auto
 
-Revision ID: 6e0eabb6f16c
+Revision ID: 1c8ee112cb27
 Revises: 
-Create Date: 2025-06-17 10:50:49.256957
+Create Date: 2025-06-20 12:05:22.567265
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6e0eabb6f16c'
+revision: str = '1c8ee112cb27'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,6 +25,7 @@ def upgrade() -> None:
     op.create_table('project',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
@@ -38,6 +39,9 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_project_name'), 'project', ['name'], unique=False)
     op.create_table('user',
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('fullname', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
@@ -45,21 +49,37 @@ def upgrade() -> None:
     sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('address', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('role', sa.Enum('ADMIN', 'AGENT', 'CLIENT', name='role'), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
     sa.Column('verification_code', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('commission_rate', sa.Float(), nullable=True),
     sa.Column('is_internal', sa.Boolean(), nullable=True),
     sa.Column('created_by', sa.Uuid(), nullable=True),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('reason_for_delete', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
     op.create_index(op.f('ix_user_phone'), 'user', ['phone'], unique=True)
+    op.create_table('mediafile',
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('file_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('file_name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('file_path', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('file_size', sa.Integer(), nullable=False),
+    sa.Column('deleted', sa.Boolean(), nullable=False),
+    sa.Column('uploaded_by', sa.Uuid(), nullable=True),
+    sa.ForeignKeyConstraint(['uploaded_by'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('unit',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
@@ -82,18 +102,21 @@ def upgrade() -> None:
     op.create_table('documenttemplate',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('link', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('media_file_id', sa.Uuid(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
     sa.Column('deleted', sa.Boolean(), nullable=False),
     sa.Column('reason_for_delete', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.ForeignKeyConstraint(['media_file_id'], ['mediafile.id'], ),
     sa.ForeignKeyConstraint(['unit_id'], ['unit.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('payment',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=False),
     sa.Column('due_date', sa.DateTime(), nullable=False),
@@ -107,9 +130,10 @@ def upgrade() -> None:
     op.create_table('signeddocument',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('link', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('media_file_id', sa.Uuid(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
     sa.Column('client_id', sa.Uuid(), nullable=True),
     sa.Column('agent_id', sa.Uuid(), nullable=True),
@@ -117,12 +141,14 @@ def upgrade() -> None:
     sa.Column('reason_for_delete', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.ForeignKeyConstraint(['agent_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['client_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['media_file_id'], ['mediafile.id'], ),
     sa.ForeignKeyConstraint(['unit_id'], ['unit.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('unitagentlink',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('unit_id', sa.Uuid(), nullable=False),
     sa.Column('agent_id', sa.Uuid(), nullable=False),
@@ -142,6 +168,7 @@ def downgrade() -> None:
     op.drop_table('payment')
     op.drop_table('documenttemplate')
     op.drop_table('unit')
+    op.drop_table('mediafile')
     op.drop_index(op.f('ix_user_phone'), table_name='user')
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')

@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from app.db.session import engine
-from app.models.document import DocumentTemplate, SignedDocument
+from app.models.document import DocumentTemplate, SignedDocument, MediaFile
 from app.models.unit import Unit
 from app.models.user import User, Role
 from datetime import datetime, timezone
@@ -12,23 +12,56 @@ def seed_documents():
         client = session.exec(select(User).where(User.role == Role.CLIENT)).first()
         agent = session.exec(select(User).where(User.role == Role.AGENT)).first()
 
+        media_file = MediaFile(
+            file_name="Sale Agreement - Sample.pdf",
+            file_type="application/pdf",
+            file_path="/media/sale_agreement_sample.pdf",
+            file_size=204800,  # 200 KB
+            uploaded_by=agent.id if agent else client.id if client else None,
+        )
+        session.add(media_file)
+        session.commit()
+        session.refresh(media_file)
+        
+        media_file2 = MediaFile(
+            file_name="Sale Agreement - Sample.pdf",
+            file_type="application/pdf",
+            file_path="/media/sale_agreement_sample.pdf",
+            file_size=204800,  # 200 KB
+            uploaded_by=agent.id if agent else  None,
+        )
+        session.add(media_file2)
+        session.commit()
+        session.refresh(media_file2)
+
+        media_file3 = MediaFile(
+            file_name="Sale Agreement - Sample.pdf",
+            file_type="application/pdf",
+            file_path="/media/sale_agreement_sample.pdf",
+            file_size=204800,  # 200 KB
+            uploaded_by=client.id if client else None,
+        )
+        session.add(media_file3)
+        session.commit()
+        session.refresh(media_file3)
+
         if unit:
             template = DocumentTemplate(
                 name="Sale Agreement Template",
-                link="https://example.com/template.pdf",
+                media_file_id=media_file.id ,
                 unit_id=unit.id
             )
             session.add(template)
 
             signed_by_client = SignedDocument(
                 name="Signed Sale Agreement - Client",
-                link="https://example.com/signed-client.pdf",
+                media_file_id=media_file3.id,
                 unit_id=unit.id,
                 client_id=client.id if client else None
             )
             signed_by_agent = SignedDocument(
                 name="Signed Sale Agreement - Agent",
-                link="https://example.com/signed-agent.pdf",
+                media_file_id=media_file2.id,
                 unit_id=unit.id,
                 agent_id=agent.id if agent else None
             )
