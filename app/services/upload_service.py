@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 import boto3
 from typing import Optional
 import boto3.session
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException, status
 from sqlmodel import select, Session
 from app.models.document import MediaFile
 from app.core.config import settings
@@ -72,21 +72,16 @@ def get_media_file(session: Session, media_file_id: UUID) -> MediaFile | None:
     return session.get(MediaFile, media_file_id)
 
 
-def download_media_file(session: Session, media_file_id: UUID) -> Optional[StreamingResponse]:
-    """
-    Download a media file by its ID.
-    """
+def download_media_file(session: Session, media_file_id: UUID) -> StreamingResponse:
     media_file = get_media_file(session, media_file_id)
     if not media_file:
-        return None
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
     try:
         response = client.get_object(
             Bucket=settings.R2_BUCKET_NAME,
             Key=media_file.file_name,
             ResponseContentType=media_file.file_type
         )
-        # Option 1: Use a generator for big files
         def file_iterator():
             while True:
                 chunk = response['Body'].read(8192)
@@ -97,15 +92,7 @@ def download_media_file(session: Session, media_file_id: UUID) -> Optional[Strea
         return StreamingResponse(
             file_iterator(),
             media_type=media_file.file_type,
-            headers={"Content-Disposition": f"attachment; filename={media_file.file_name}"}
+            headers={"Content-Disposition": f'attachment; filename="{media_file.file_name}"'}
         )
-        # Option 2: For small files (less efficient for big files)
-        # content = response['Body'].read()
-        # return StreamingResponse(
-        #     iter([content]),
-        #     media_type=media_file.file_type,
-        #     headers={"Content-Disposition": f"attachment; filename={media_file.file_name}"}
-        # )
     except Exception as e:
-        print(f"Error downloading file: {e}")
-        return None
+        raise HTTPException(status_code=500, detail="Error downloading file")
