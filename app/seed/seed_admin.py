@@ -5,7 +5,7 @@ from app.core.security import hash_password
 from sqlmodel import Session, select
 from app.db.session import engine
 
-def create_admin_user():
+def create_admin_user() -> None:
     with Session(engine) as session:
         existing = session.exec(
             select(User).where(User.email == "precious@example.com")

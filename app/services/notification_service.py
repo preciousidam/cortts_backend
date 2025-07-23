@@ -2,13 +2,14 @@ from sqlmodel import Session, select, desc
 import asyncio
 from app.models.notification import Notification
 from app.schemas.paging import Paging
+from app.schemas.notification import NotificationCreate, NotificationRead
 from app.utility.paging import paginate
 from datetime import datetime, timezone
 from uuid import UUID
 from .push_notification_service import PushNotificationSender
 
 
-def create_notification(session: Session, data):
+def create_notification(session: Session, data: NotificationCreate) -> Notification:
     notification = Notification(**data.model_dump())
     session.add(notification)
     session.commit()
@@ -28,12 +29,12 @@ def create_notification(session: Session, data):
         )
     return notification
 
-def get_notifications_for_user(session: Session, user_id: UUID, paging: Paging):
+def get_notifications_for_user(session: Session, user_id: UUID, paging: Paging) -> dict[str, list[Notification] | int]:
     query = select(Notification).where(Notification.user_id == user_id).order_by(desc(Notification.created_at))
     notifications, total = paginate(session, query, paging)
     return {"data": notifications, "total": total}
 
-def mark_notification_read(session: Session, notification_id: UUID):
+def mark_notification_read(session: Session, notification_id: UUID) -> Notification | None:
     notification = session.get(Notification, notification_id)
     if notification:
         notification.read = True
@@ -43,17 +44,17 @@ def mark_notification_read(session: Session, notification_id: UUID):
         session.refresh(notification)
     return notification
 
-def delete_notification(session: Session, notification_id: UUID):
+def delete_notification(session: Session, notification_id: UUID) -> Notification | None:
     notification = session.get(Notification, notification_id)
     if notification:
         session.delete(notification)
         session.commit()
     return notification
 
-def get_notification_by_id(session: Session, notification_id: UUID):
+def get_notification_by_id(session: Session, notification_id: UUID) -> Notification | None:
     return session.get(Notification, notification_id)
 
-def batch_mark_notifications_read(session: Session, user_id: UUID, notification_ids: list[UUID]):
+def batch_mark_notifications_read(session: Session, user_id: UUID, notification_ids: list[UUID]) -> int:
     # Mark all provided notifications as read, must belong to user
     notifications = session.exec(
         select(Notification).where(
@@ -69,7 +70,7 @@ def batch_mark_notifications_read(session: Session, user_id: UUID, notification_
     session.commit()
     return len(notifications)
 
-def get_all_notifications_admin(session: Session, paging: Paging):
+def get_all_notifications_admin(session: Session, paging: Paging) -> dict[str, list[Notification] | int]:
     # Admin gets paginated notifications across all users
     query = select(Notification).order_by(desc(Notification.created_at))
     notifications, total = paginate(session, query, paging)

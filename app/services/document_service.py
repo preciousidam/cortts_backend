@@ -1,11 +1,13 @@
 from sqlmodel import Session, select
+from typing import Sequence
 from datetime import datetime, timezone
 from app.models.document import DocumentTemplate, SignedDocument
 from .notification_service import create_notification
+from app.schemas.document import DocumentTemplateCreate, DocumentTemplateRead, SignedDocumentCreate, SignedDocumentRead, DocumentTemplateUpdate, SignedDocumentUpdate
 
 
 # Document Template
-def create_template(session: Session, data):
+def create_template(session: Session, data: DocumentTemplateCreate) -> DocumentTemplate | None:
     """
     Creates a new document template in the database.
     :param session: SQLAlchemy session object
@@ -25,19 +27,19 @@ def create_template(session: Session, data):
 
     return record
 
-def get_templates(session: Session):
+def get_templates(session: Session) -> Sequence[DocumentTemplate]:
     """
     Retrieves all document templates.
     """
     return session.exec(select(DocumentTemplate)).all()
 
-def get_template_id(session: Session, template_id: str):
+def get_template_id(session: Session, template_id: str) -> DocumentTemplate | None:
     """
     Retrieves a document template by its ID.
     """
     return session.get(DocumentTemplate, template_id)
 
-def update_template(session: Session, template_id: str, data):
+def update_template(session: Session, template_id: str, data: DocumentTemplateUpdate) -> DocumentTemplate | None:
     """
     Updates an existing document template with the provided data.
     If the template does not exist, returns None.
@@ -52,7 +54,7 @@ def update_template(session: Session, template_id: str, data):
     session.refresh(template)
     return template
 
-def soft_delete_template(session: Session, template_id: str, reason: str):
+def soft_delete_template(session: Session, template_id: str, reason: str) -> DocumentTemplate | None:
     """
     Soft deletes a document template by marking it as deleted and setting the reason.
     If the template does not exist, returns None.
@@ -69,7 +71,7 @@ def soft_delete_template(session: Session, template_id: str, reason: str):
     return template
 
 
-def get_unit_templates(session: Session, unit_id: str):
+def get_unit_templates(session: Session, unit_id: str) -> Sequence[DocumentTemplate]:
     """
     Retrieves all document templates associated with a specific unit.
     """
@@ -77,7 +79,7 @@ def get_unit_templates(session: Session, unit_id: str):
 
 
 # Signed Document
-def create_signed_doc(session: Session, data):
+def create_signed_doc(session: Session, data: SignedDocumentCreate) -> SignedDocument:
     """
     Creates a new signed document record in the database.
     :param session: SQLAlchemy session object
@@ -122,7 +124,7 @@ def create_signed_doc(session: Session, data):
     return record
 
 
-def get_all_signed_docs(session: Session):
+def get_all_signed_docs(session: Session) -> Sequence[SignedDocument]:
     """
     Retrieves all signed documents from the database.
     :param session: SQLAlchemy session object
@@ -130,7 +132,7 @@ def get_all_signed_docs(session: Session):
     """
     return session.exec(select(SignedDocument)).all()
 
-def get_signed_template(session: Session, doc_id: str):
+def get_signed_template(session: Session, doc_id: str) -> DocumentTemplate | None:
     """
     Retrieves the document template associated with a signed document by its ID.
     :param session: SQLAlchemy session object
@@ -139,7 +141,7 @@ def get_signed_template(session: Session, doc_id: str):
     """
     return session.exec(select(DocumentTemplate).where(SignedDocument.id == doc_id)).first()
 
-def soft_delete_signed_doc(session: Session, doc_id: str, reason: str):
+def soft_delete_signed_doc(session: Session, doc_id: str, reason: str) -> SignedDocument | None:
     """
     Soft deletes a signed document by marking it as deleted and setting the reason.
     :param session: SQLAlchemy session object
@@ -157,7 +159,7 @@ def soft_delete_signed_doc(session: Session, doc_id: str, reason: str):
     return signed_doc
 
 
-def get_signed_docs_for_unit(session: Session, unit_id: str):
+def get_signed_docs_for_unit(session: Session, unit_id: str) -> Sequence[SignedDocument]:
     """
     Retrieves all signed documents associated with a specific unit.
     :param session: SQLAlchemy session object
@@ -167,7 +169,7 @@ def get_signed_docs_for_unit(session: Session, unit_id: str):
     return session.exec(select(SignedDocument).where(SignedDocument.unit_id == unit_id)).all()
 
 
-def get_signed_docs_for_client(session: Session, client_id: str):
+def get_signed_docs_for_client(session: Session, client_id: str) -> Sequence[SignedDocument]:
     """
     Retrieves all signed documents associated with a specific client.
     :param session: SQLAlchemy session object
@@ -177,7 +179,7 @@ def get_signed_docs_for_client(session: Session, client_id: str):
     return session.exec(select(SignedDocument).where(SignedDocument.client_id == client_id)).all()
 
 
-def get_signed_docs_for_agent(session: Session, agent_id: str):
+def get_signed_docs_for_agent(session: Session, agent_id: str) -> Sequence[SignedDocument]:
     """
     Retrieves all signed documents associated with a specific agent.
     :param session: SQLAlchemy session object

@@ -4,13 +4,15 @@ from app.models.unit import Unit
 from app.models.payment import Payment, PaymentStatus
 from app.schemas.paging import Paging
 from app.models.user import User, Role
-from app.models import UnitAgentLink
+from app.models.unit_agent_link import UnitAgentLink
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from app.core.config import settings
 from app.utility.paging import paginate
+from app.schemas.unit import UnitCreate, UnitUpdate, UnitRead
+from app.schemas.unit_agent_link import UnitAgentLinkCreate, UnitAgentLinkRead
 
-def create_unit(session: Session, data):
+def create_unit(session: Session, data: UnitCreate) -> Unit:
 
     client = session.get(User, data.client_id)
     if not client or client.role != Role.CLIENT:
@@ -60,16 +62,16 @@ def create_unit(session: Session, data):
 
     return unit
 
-def get_all_units(session: Session, paging: Paging):
+def get_all_units(session: Session, paging: Paging) -> dict[str, list[UnitRead] | int]:
     query = select(Unit).where(Unit.deleted == False)
     units, total = paginate(session, query, paging)
     
     return {"data": units, "total": total}
 
-def get_unit_by_id(session: Session, unit_id: UUID):
+def get_unit_by_id(session: Session, unit_id: UUID) -> Unit | None:
     return session.get(Unit, unit_id)
 
-def soft_delete_unit(session: Session, unit_id: UUID, reason: str):
+def soft_delete_unit(session: Session, unit_id: UUID, reason: str) -> Unit | None:
     unit = session.get(Unit, unit_id)
     if unit:
         unit.deleted = True
@@ -78,7 +80,7 @@ def soft_delete_unit(session: Session, unit_id: UUID, reason: str):
         session.commit()
     return unit
 
-def update_unit(session: Session, unit_id: UUID, data):
+def update_unit(session: Session, unit_id: UUID, data: UnitUpdate) -> Unit | None:
     unit = session.get(Unit, unit_id)
     if not unit or unit.deleted:
         return None
@@ -115,7 +117,7 @@ def update_unit(session: Session, unit_id: UUID, data):
 
 
 # Add after update_unit
-def recalculate_payments(session: Session, unit: Unit):
+def recalculate_payments(session: Session, unit: Unit)  -> None:
     # Remove existing non-deleted scheduled payments (excluding the initial payment)
     scheduled_payments = [
         p for p in unit.payments
@@ -140,12 +142,12 @@ def recalculate_payments(session: Session, unit: Unit):
         ))
     session.commit()
 
-def warranty_info(unit: Unit):
+def warranty_info(unit: Unit)  -> dict[str, bool | str | None]:
     return {"expire_at": unit.warranty, "isValid": date.today() <= datetime.strptime(unit.warranty, "%Y-%m-%d").date()} if unit.warranty else {"isValid": False, "expire_at": None}
 
-def payment_summary(unit: Unit):
+def payment_summary(unit: Unit)  -> dict[str, float | int | str | None]:
     return unit.payment_summary
 
-def graph_data(unit: Unit):
+def graph_data(unit: Unit) -> list[dict[str, float | int]]:
     # summary = payment_summary(unit)
     return unit.graph_data

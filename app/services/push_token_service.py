@@ -5,7 +5,7 @@ from app.models.user import User
 from sqlmodel import Session, select
     
 
-def register_push_token(session: Session, user_id: UUID, token: str, device: str = ""):
+def register_push_token(session: Session, user_id: UUID, token: str, device: str = "") -> PushToken:
     # Check if already exists
     existing = session.exec(
         select(PushToken).where(PushToken.user_id == user_id, PushToken.token == token)
@@ -23,7 +23,7 @@ def register_push_token(session: Session, user_id: UUID, token: str, device: str
     session.refresh(push_token)
     return push_token
 
-def remove_push_token(session: Session, user_id: UUID, token: str):
+def remove_push_token(session: Session, user_id: UUID, token: str) -> bool:
     existing = session.exec(
         select(PushToken).where(PushToken.user_id == user_id, PushToken.token == token)
     ).first()

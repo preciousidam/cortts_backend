@@ -1,10 +1,15 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from uuid import UUID, uuid4
 from enum import Enum
 from datetime import datetime, timezone
+from app.models.company import Company
 
 from app.models.timestamp_mixin import TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.unit import Unit
+    from app.models.unit_agent_link import UnitAgentLink
 
 class Role(str, Enum):
     ADMIN = "admin"
@@ -33,4 +38,6 @@ class User(SQLModel, TimestampMixin, table=True):
 
     # As an agent (linked via association table)
     unit_links: list["UnitAgentLink"] = Relationship(back_populates="agent")
+    company_id: Optional[UUID] = Field(default=None, foreign_key="company.id")
+    company: Optional[Company] = Relationship(back_populates="users")
 

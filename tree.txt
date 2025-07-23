@@ -6,7 +6,8 @@
 │   └── versions
 │       ├── 128402406239_auto.py
 │       ├── 1c8ee112cb27_auto.py
-│       └── 79603bf64927_auto.py
+│       ├── 79603bf64927_auto.py
+│       └── c995fad7d875_auto.py
 ├── alembic.ini
 ├── app
 │   ├── __init__.py
@@ -14,6 +15,7 @@
 │   │   ├── __init__.py
 │   │   └── routes
 │   │       ├── auth.py
+│   │       ├── company.py
 │   │       ├── document.py
 │   │       ├── notification.py
 │   │       ├── payment.py
@@ -33,6 +35,7 @@
 │   ├── main.py
 │   ├── models
 │   │   ├── __init__.py
+│   │   ├── company.py
 │   │   ├── document.py
 │   │   ├── notification.py
 │   │   ├── payment.py
@@ -43,6 +46,7 @@
 │   │   ├── unit.py
 │   │   └── user.py
 │   ├── schemas
+│   │   ├── company.py
 │   │   ├── document.py
 │   │   ├── media.py
 │   │   ├── notification.py
@@ -59,6 +63,7 @@
 │   │   └── seed_unit_agent.py
 │   ├── services
 │   │   ├── __init__.py
+│   │   ├── company_service.py
 │   │   ├── document_service.py
 │   │   ├── notification_service.py
 │   │   ├── payment_service.py
@@ -82,4 +87,4 @@
 ├── tree.txt
 └── uploaded_artworks
 
-17 directories, 66 files
+17 directories, 71 files

@@ -1,9 +1,10 @@
 from sqlmodel import SQLModel
+from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime
 
-class NotificationBase(SQLModel):
+class NotificationBase(BaseModel):
     title: str
     body: str
     data: Optional[Dict[str, Any]] = None
@@ -19,6 +20,6 @@ class NotificationRead(NotificationBase):
     created_at: datetime
     updated_at: datetime
 
-class NotificationList(SQLModel):
+class NotificationList(BaseModel):
     data: list[NotificationRead]
     total: int

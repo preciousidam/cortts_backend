@@ -11,6 +11,6 @@ class Notification(SQLModel, TimestampMixin, table=True):
     user_id: UUID = Field(foreign_key="user.id")
     title: str
     body: str
-    data: Optional[dict] = Field(default=None, sa_column=Column(SAJSON, nullable=True))  # Extra metadata (e.g. document_id, action, etc.)
+    data: Optional[dict[str, str]] = Field(default=None, sa_column=Column(SAJSON, nullable=True))  # Extra metadata (e.g. document_id, action, etc.)
     sent_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     read: bool = False

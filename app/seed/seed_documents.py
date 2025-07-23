@@ -6,7 +6,7 @@ from app.models.user import User, Role
 from datetime import datetime, timezone
 
 
-def seed_documents():
+def seed_documents() -> None:
     with Session(engine) as session:
         unit = session.exec(select(Unit)).first()
         client = session.exec(select(User).where(User.role == Role.CLIENT)).first()

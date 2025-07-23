@@ -1,8 +1,11 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime,timezone
 from uuid import uuid4, UUID
 from app.models.timestamp_mixin import TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.unit import Unit
 
 class Project(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)

@@ -1,9 +1,15 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 from enum import Enum
 from app.models.timestamp_mixin import TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.unit_agent_link import UnitAgentLink
+    from app.models.user import User
+    from app.models.project import Project
+    from app.models.payment import Payment
 
 class PaymentStatus(str, Enum):
     PAID = "paid"
@@ -75,7 +81,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
         }
 
     @property
-    def graph_data(self) -> List[Dict[str, Any]]:
+    def graph_data(self) -> List[Dict[str, float | int]]:
         if not self.installment:
             return []
         total = self.amount - self.discount
@@ -85,7 +91,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
             {"month": i + 1, "amount": round(monthly_payment, 2)}
             for i in range(self.installment)
         ]
-    
+
     @property
-    def total_paid(self):
-        return sum(p.amount for p in self.payments if p.status == PaymentStatus.PAID)
+    def total_paid(self) -> float:
+        return sum(p.amount for p in self.payments if p.status.value == PaymentStatus.PAID)

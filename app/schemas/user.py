@@ -6,13 +6,13 @@ from typing import Optional
 from datetime import datetime
 from uuid import UUID
 from app.models.user import Role
+from app.schemas.company import CompanyRead
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     fullname: str
     phone: str | None = None
-    role: Optional[Role] = Role.CLIENT
     created_by: Optional[str] = None
 
 class LoginResponse(BaseModel):
@@ -21,17 +21,30 @@ class LoginResponse(BaseModel):
     role: Role
     user_id: str
 
+class VerifyRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str
 
 class UserBase(BaseModel):
     fullname: str
     email: str
     phone: str
     address: Optional[str] = None
-    role: Role = Role.CLIENT
+    # role: Role = Role.CLIENT
     commission_rate: Optional[float] = None
     is_internal: Optional[bool] = None
     created_by: Optional[str] = None
     is_active: Optional[bool] = True
+    company_id: Optional[UUID] = None
+    company: Optional[CompanyRead] = None
     
 
 class UserCreate(UserBase):

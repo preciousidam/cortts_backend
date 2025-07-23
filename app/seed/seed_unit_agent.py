@@ -8,7 +8,7 @@ from app.models.user import User, Role
 from datetime import datetime, timezone
 
 
-def seed():
+def seed() -> None:
     with Session(engine) as session:
         # Agents (now as Users)
         internal_agent = User(

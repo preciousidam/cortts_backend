@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -7,7 +7,7 @@ from app.schemas.unit import UnitRead  # Assuming UnitReadSchema is defined else
 
 
 # Document Template
-class DocumentTemplateBase(SQLModel):
+class DocumentTemplateBase(BaseModel):
     name: str
     media_file_id: UUID
     media_file: MediaFileReadSchema
@@ -25,9 +25,16 @@ class DocumentTemplateRead(DocumentTemplateBase):
     created_at: datetime
     updated_at: datetime
 
+class DocumentTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    media_file_id: Optional[UUID] = None
+    unit_id: Optional[UUID] = None
+    deleted_at: Optional[bool] = None
+    reason_for_delete: Optional[str] = None
+
 
 # Signed Document
-class SignedDocumentBase(SQLModel):
+class SignedDocumentBase(BaseModel):
     name: str
     media_file_id: UUID
     media_file: MediaFileReadSchema
@@ -44,3 +51,12 @@ class SignedDocumentRead(SignedDocumentBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+
+class SignedDocumentUpdate(BaseModel):
+    name: Optional[str] = None
+    media_file_id: Optional[UUID] = None
+    unit_id: Optional[UUID] = None
+    client_id: Optional[UUID] = None
+    agent_id: Optional[UUID] = None
+    deleted_at: Optional[bool] = None
+    reason_for_delete: Optional[str] = None

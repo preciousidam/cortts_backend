@@ -1,7 +1,7 @@
 import os
 from uuid import UUID, uuid4
 import boto3
-from typing import Optional
+from typing import Sequence, Any
 import boto3.session
 from fastapi import UploadFile, HTTPException, status
 from sqlmodel import select, Session
@@ -55,7 +55,7 @@ def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) 
     db.refresh(media_file)
     return media_file
 
-def get_all_media_files(session: Session):
+def get_all_media_files(session: Session) -> Sequence[MediaFile]:
     """
     Retrieve all media files from the database.
     """
@@ -82,7 +82,7 @@ def download_media_file(session: Session, media_file_id: UUID) -> StreamingRespo
             Key=media_file.file_name,
             ResponseContentType=media_file.file_type
         )
-        def file_iterator():
+        def file_iterator() -> Any:
             while True:
                 chunk = response['Body'].read(8192)
                 if not chunk:

@@ -1,5 +1,5 @@
 import httpx
-from typing import List, Optional
+from typing import List, Optional, Any
 from app.models.push_token import PushToken
 from uuid import UUID
 from datetime import datetime, timezone
@@ -14,9 +14,9 @@ class PushNotificationSender:
         tokens: List[str],
         title: str,
         body: str,
-        data: Optional[dict] = None,
+        data: Optional[dict[str, str]] = None,
         image: Optional[str] = None
-    ):
+    ) -> List[Any]:
         messages = []
         for token in tokens:
             message = {
@@ -40,14 +40,14 @@ class PushNotificationSender:
             return responses
 
     @staticmethod
-    def get_tokens_for_user(session: Session, user_id):
+    def get_tokens_for_user(session: Session, user_id: UUID) -> List[str]:
         tokens = session.exec(
             select(PushToken.token).where(PushToken.user_id == user_id)
         ).all()
         return [t for t in tokens if t]
-    
 
-def register_push_token(session: Session, user_id: UUID, token: str, device: str = ""):
+
+def register_push_token(session: Session, user_id: UUID, token: str, device: str = "") -> PushToken:
     # Check if already exists
     existing = session.exec(
         select(PushToken).where(PushToken.user_id == user_id, PushToken.token == token)
@@ -65,7 +65,7 @@ def register_push_token(session: Session, user_id: UUID, token: str, device: str
     session.refresh(push_token)
     return push_token
 
-def remove_push_token(session: Session, user_id: UUID, token: str):
+def remove_push_token(session: Session, user_id: UUID, token: str) -> bool:
     existing = session.exec(
         select(PushToken).where(PushToken.user_id == user_id, PushToken.token == token)
     ).first()
