@@ -20,7 +20,7 @@ history:
 
 # Start server (uvicorn)
 run:
-	python -m uvicorn app.main:app --host 0.0.0.0 --reload
+	python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Clean up pycaches
 clean:
