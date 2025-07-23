@@ -24,5 +24,9 @@ EXPOSE 8000
 # Set environment variables (optional, for Python output buffering)
 ENV PYTHONUNBUFFERED=1
 
+COPY start.sh /start.sh
+
+RUN chmod +x /start.sh
+
 # Run the FastAPI app with Uvicorn
 CMD ["/start.sh"]
