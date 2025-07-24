@@ -13,15 +13,15 @@ from app.utility.paging import paginate
 
 def create_user(session: Session, data: Union[UserCreate, RegisterRequest]) -> User:
     # Ensure fullname, email, phone are present (for RegisterRequest, may not be)
-    fullname = getattr(data, "fullname", None)
-    email = getattr(data, "email", None)
-    phone = getattr(data, "phone", None)
+    fullname: str | None = getattr(data, "fullname", None)
+    email: str | None = getattr(data, "email", None)
+    phone: str | None = getattr(data, "phone", None)
 
     # If missing, raise error
     if not fullname or not email or not phone:
         raise HTTPException(status_code=400, detail="fullname, email, and phone are required.")
 
-    user = session.exec(select(User).where(or_(User.email == email, User.phone == phone))).first()
+    user = session.exec(select(User).where(or_(User.email == email.lower(), User.phone == phone))).first()
 
     if user:
         raise HTTPException(status_code=409, detail="Email or phone number already registered.")
@@ -30,7 +30,7 @@ def create_user(session: Session, data: Union[UserCreate, RegisterRequest]) -> U
     code = str(random.randint(100000, 999999))
     user = User(
         fullname=fullname,
-        email=email,
+        email=email.lower(),
         phone=phone,
         hashed_password=hash_password(data.password),
         address=getattr(data, "address", None),
@@ -49,7 +49,7 @@ def create_user(session: Session, data: Union[UserCreate, RegisterRequest]) -> U
     return user
 
 def authenticate_user(session: Session, email: str, password: str)  -> User | None:
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.email == email.lower())).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
     if not user.is_verified:
@@ -73,7 +73,10 @@ def update_user(session: Session, user_id: str, data: UserUpdate) -> User | None
     if not user:
         return None
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(user, field, value)
+        if field == "email":
+            setattr(user, field, value.lower())
+        else:
+            setattr(user, field, value)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -118,3 +121,13 @@ def reset_password(session: Session, email: EmailStr, code: str, new_password: s
     session.commit()
     session.refresh(user)
     return user
+
+def logout_user(session: Session, user_id: str) -> None:
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    # Invalidate the user's session or token here if needed
+    # This is a placeholder as actual implementation depends on your auth system
+    print(f"[DEBUG] User {user_id} logged out successfully.")
+    return None

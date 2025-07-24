@@ -77,3 +77,8 @@ def reset_password_route(data: ResetPasswordRequest, session: Session = Depends(
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     return {"message": "Password reset successful."}
+
+@router.post("/logout")
+def logout(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    # Invalidate the user's session or token here if needed
+    return {"message": "Logged out successfully."}

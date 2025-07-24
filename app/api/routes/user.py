@@ -28,16 +28,16 @@ def get(user_id: str, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.patch("/{user_id}", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN]))])
-def update(user_id: str, data: UserUpdate, session: Session = Depends(get_session)):
-    return update_user(session, user_id, data)
-
 @router.patch("/me", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.CLIENT, Role.AGENT]))])
 def update_me(data: UserUpdate, current_user=Depends(get_current_user()), session: Session = Depends(get_session)):
     user = update_user(session, current_user.id, data)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.patch("/{user_id}", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN]))])
+def update(user_id: str, data: UserUpdate, session: Session = Depends(get_session)):
+    return update_user(session, user_id, data)
 
 @router.delete("/{user_id}", dependencies=[Depends(get_current_user([Role.ADMIN]))])
 def delete(user_id: str, reason: str, session: Session = Depends(get_session)):
