@@ -45,7 +45,7 @@ class UserBase(BaseModel):
     is_active: Optional[bool] = True
     company_id: Optional[UUID] = None
     company: Optional[CompanyRead] = None
-    
+
 
 class UserCreate(UserBase):
     password: str
@@ -58,7 +58,7 @@ class UserRead(UserBase):
 
 class UserUpdate(BaseModel):
     fullname: Optional[str] = None
-    email: Optional[str] = None
+    # email: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     role: Optional[Role] = None
