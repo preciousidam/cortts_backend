@@ -39,6 +39,6 @@ class Project(SQLModel, TimestampMixin, table=True):
             return Status.ARCHIVED.value
         if self.units:
             for unit in self.units:
-                if unit.handover_date == None:
-                    return Status.ONGOING.value
-        return Status.COMPLETED.value
+                if unit.handover_date is not None:
+                    return Status.COMPLETED.value
+        return Status.ONGOING.value
