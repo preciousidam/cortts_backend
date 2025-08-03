@@ -15,7 +15,7 @@ def create_project(session: Session, data: ProjectCreate) -> Project:
 def get_all_projects(session: Session, paging: Paging) -> dict[str, list[Project] | int]:
     query = select(Project).where(Project.deleted == False)
     projects, total = paginate(session, query, paging)
-    
+
     return {"data": projects, "total": total}
 
 def get_project_by_id(session: Session, project_id: str) -> Project | None:
