@@ -3,6 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from app.models.unit_agent_link import AgentRole
+from app.models.unit import UnitCompletionStatus  # Assuming 'Unit' is defined in models/unit.py
 class AgentAssignment(BaseModel):
     agent_id: UUID
     role: AgentRole
@@ -23,6 +24,7 @@ class UnitBase(BaseModel):
     project_id: Optional[UUID] = None
     agent_id: Optional[UUID] = None
     sales_rep: Optional[str] = None
+    development_status: Optional[UnitCompletionStatus] = UnitCompletionStatus.NOT_STARTED
 
 class UnitCreate(UnitBase):
     agents: list[AgentAssignment] | None = []
@@ -44,6 +46,7 @@ class UnitUpdate(BaseModel):
     agent_id: Optional[UUID] = None
     sales_rep: Optional[UUID] = None
     agents: list[AgentAssignment] | None = None
+    development_status: Optional[UnitCompletionStatus] = None
 
 class PaymentSummary(BaseModel):
     outstanding: float

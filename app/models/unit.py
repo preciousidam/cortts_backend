@@ -16,6 +16,11 @@ class PaymentStatus(str, Enum):
     NOT_PAID = "not_paid"
     OVERDUE = "overdue"
 
+class UnitCompletionStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
 
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -33,6 +38,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     handover_date: Optional[datetime] = None
     deleted: bool = False
     reason_for_delete: Optional[str] = None
+    development_status: UnitCompletionStatus | None = UnitCompletionStatus.NOT_STARTED
 
     unit_agents: List["UnitAgentLink"] = Relationship(back_populates="unit")
     client: Optional["User"] = Relationship(back_populates="units")
