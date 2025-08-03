@@ -21,6 +21,24 @@ class UnitCompletionStatus(str, Enum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
 
+from enum import Enum
+
+class PropertyType(str, Enum):
+    DETACHED = "detached"
+    SEMI_DETACHED = "semi_detached"
+    TERRACED = "terraced"
+    END_OF_TERRACE = "end_of_terrace"
+    BUNGALOW = "bungalow"
+    MAISONETTE = "maisonette"
+    FLAT = "flat"
+    DUPLEX = "duplex"
+    TRIPLEX = "triplex"
+    PENTHOUSE = "penthouse"
+    STUDIO = "studio"
+    COTTAGE = "cottage"
+    VILLA = "villa"
+    TOWNHOUSE = "townhouse"
+    CHALET = "chalet"
 
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
@@ -29,7 +47,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     expected_initial_payment: float
     discount: float = 0.0
     comments: Optional[str] = None
-    type: Optional[str] = None
+    type: Optional[PropertyType] = None
     purchase_date: datetime
     installment: int = 1
     payment_plan: bool = False
