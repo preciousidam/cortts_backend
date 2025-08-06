@@ -39,6 +39,11 @@ class UnitUpdate(BaseModel):
     purchase_date: Optional[datetime] = None
     installment: Optional[int] = None
     payment_plan: Optional[bool] = None
+    payment_duration: Optional[str] = None
+    handover_date: Optional[datetime] = None
+    warranty_period: Optional[int] = None
+    client_id: Optional[UUID] = None
+    project_id: Optional[UUID] = None
     handover_date: Optional[datetime] = None
     warranty_period: Optional[int] = None
     client_id: Optional[UUID] = None

@@ -25,7 +25,7 @@ def create_unit(session: Session, data: UnitCreate) -> Unit:
 
     # Generate payments if payment_plan is enabled
     if unit.payment_plan:
-        total = unit.amount - (unit.discount or 0)
+        total = unit.amount - ((unit.discount or 0) * unit.amount)
         remaining = total - (unit.expected_initial_payment or 0)
         monthly = round(remaining / unit.installment, 2) if unit.installment else 0
 
@@ -65,7 +65,7 @@ def create_unit(session: Session, data: UnitCreate) -> Unit:
 def get_all_units(session: Session, paging: Paging) -> dict[str, list[UnitRead] | int]:
     query = select(Unit).where(Unit.deleted == False)
     units, total = paginate(session, query, paging)
-    
+
     return {"data": units, "total": total}
 
 def get_unit_by_id(session: Session, unit_id: UUID) -> Unit | None:
@@ -101,7 +101,7 @@ def update_unit(session: Session, unit_id: UUID, data: UnitUpdate) -> Unit | Non
         links = session.exec(select(UnitAgentLink).where(UnitAgentLink.unit_id == unit_id)).all()
         for link in links:
             session.delete(link)
-        
+
         session.commit()
 
         # Add new links
@@ -112,7 +112,7 @@ def update_unit(session: Session, unit_id: UUID, data: UnitUpdate) -> Unit | Non
                 role=agent.role
             ))
         session.commit()
-    
+
     return unit
 
 
@@ -128,7 +128,7 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
     session.commit()
 
     # Recalculate new monthly payments
-    total = unit.amount - (unit.discount or 0)
+    total = unit.amount - ((unit.discount or 0) * unit.amount)
     remaining = total - (unit.expected_initial_payment or 0)
     monthly = round(remaining / unit.installment, 2) if unit.installment else 0
 
