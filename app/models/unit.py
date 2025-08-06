@@ -40,6 +40,12 @@ class PropertyType(str, Enum):
     TOWNHOUSE = "townhouse"
     CHALET = "chalet"
 
+class PaymentDuration(str, Enum):
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    BI_ANNUALLY = "bi_annually"
+    ANNUALLY = "annually"
+
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
@@ -54,10 +60,11 @@ class Unit(SQLModel, TimestampMixin, table=True):
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     project_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
     handover_date: Optional[datetime] = None
-    deleted: bool = False
-    reason_for_delete: Optional[str] = None
+    payment_duration: PaymentDuration | None = PaymentDuration.MONTHLY
+    deleted: bool | None = False
+    reason_for_delete: Optional[str] | None = None
     development_status: UnitCompletionStatus | None = UnitCompletionStatus.NOT_STARTED
-
+    warranty_period: Optional[int] | None = 12 # in months
     unit_agents: List["UnitAgentLink"] = Relationship(back_populates="unit")
     client: Optional["User"] = Relationship(back_populates="units")
     project: Optional["Project"] = Relationship(back_populates="units")
@@ -67,8 +74,8 @@ class Unit(SQLModel, TimestampMixin, table=True):
     def warranty(self) -> Optional[str]:
         if not self.handover_date:
             return None
-        warranty_end = self.handover_date + timedelta(days=365)
-        return warranty_end.strftime("%Y-%m-%d")
+        warranty_end = self.handover_date + timedelta(days=(self.warranty_period or 0) * 30)
+        return warranty_end.strftime("%Y-%m-%dT%H:%M:%S%z")
 
     @property
     def payment_summary(self) -> Dict[str, Any]:

@@ -47,6 +47,8 @@ class UnitUpdate(BaseModel):
     sales_rep: Optional[UUID] = None
     agents: list[AgentAssignment] | None = None
     development_status: Optional[UnitCompletionStatus] = None
+    deleted: bool | None = None
+    reason_for_delete: Optional[str] = None
 
 class PaymentSummary(BaseModel):
     outstanding: float
@@ -74,7 +76,6 @@ class UnitRead(UnitBase):
     payment_summary: Optional[PaymentSummary]
     graph_data: Optional[list[GraphDataPoint]]
     total_paid: float = 0
-    expected_initial_payment: float
     created_at: datetime
     updated_at: datetime
 
