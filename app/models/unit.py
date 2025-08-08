@@ -54,7 +54,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     discount: float = 0.0
     comments: Optional[str] = None
     type: Optional[PropertyType] = None
-    purchase_date: datetime
+    purchase_date: datetime | None = None
     installment: int = 1
     payment_plan: bool = False
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
