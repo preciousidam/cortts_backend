@@ -16,7 +16,7 @@ class PaymentStatus(str, Enum):
 class Payment(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     amount: float
-    due_date: datetime
+    due_date: datetime | None = None
     status: PaymentStatus = PaymentStatus.NOT_PAID
     deleted: bool = False
     reason_for_delete: Optional[str] = None
