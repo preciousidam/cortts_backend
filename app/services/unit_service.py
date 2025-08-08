@@ -133,11 +133,45 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
     monthly = round(remaining / unit.installment, 2) if unit.installment else 0
 
     for i in range(unit.installment):
-        due = unit.purchase_date + relativedelta(months=i+1)
+        if unit.payment_duration == "MONTHLY":
+            due = unit.purchase_date + relativedelta(months=i+1)
+            session.add(Payment(
+                amount=monthly,
+                due_date=due,
+                status=PaymentStatus.NOT_PAID,
+                unit_id=unit.id
+            ))
+        elif unit.payment_duration == "QUARTERLY":
+            due = unit.purchase_date + relativedelta(months=(i+1)*3)
+            session.add(Payment(
+                amount=monthly,
+                due_date=due,
+                status=PaymentStatus.NOT_PAID,
+                unit_id=unit.id
+            ))
+        elif unit.payment_duration == "BI_ANNUALLY":
+            due = unit.purchase_date + relativedelta(months=(i+1)*6)
+            session.add(Payment(
+                amount=monthly,
+                due_date=due,
+                status=PaymentStatus.NOT_PAID,
+                unit_id=unit.id
+            ))
+        elif unit.payment_duration == "ANNUALLY":
+            due = unit.purchase_date + relativedelta(years=i+1)
+            session.add(Payment(
+                amount=monthly,
+                due_date=due,
+                status=PaymentStatus.NOT_PAID,
+                unit_id=unit.id
+            ))
+
+    # If initial payment was made, add it as a paid payment
+    if unit.expected_initial_payment:
         session.add(Payment(
-            amount=monthly,
-            due_date=due,
-            status=PaymentStatus.NOT_PAID,
+            amount=unit.expected_initial_payment,
+            due_date=unit.purchase_date,
+            status=PaymentStatus.PAID,
             unit_id=unit.id
         ))
     session.commit()
