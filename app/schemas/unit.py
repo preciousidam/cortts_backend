@@ -15,7 +15,7 @@ class UnitBase(BaseModel):
     discount: Optional[float] = 0
     comments: Optional[str] = None
     type: Optional[str] = None
-    purchase_date: datetime
+    purchase_date: datetime | None = None
     installment: int = 1
     payment_plan: bool = False
     handover_date: Optional[datetime] = None
