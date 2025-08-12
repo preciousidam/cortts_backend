@@ -55,6 +55,16 @@ def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) 
     db.refresh(media_file)
     return media_file
 
+def create_media_files(db: Session, added_by: UUID, media_files: Sequence[UploadFile]) -> Sequence[MediaFile]:
+    """
+    Create multiple media file records in the database.
+    """
+    created_files = []
+    for media_file in media_files:
+        created_file = create_media_file(db, added_by, media_file)
+        created_files.append(created_file)
+    return created_files
+
 def get_all_media_files(session: Session) -> Sequence[MediaFile]:
     """
     Retrieve all media files from the database.
