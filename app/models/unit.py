@@ -3,6 +3,7 @@ from typing import Optional, List, Dict, Any, TYPE_CHECKING
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 from enum import Enum
+
 from app.models.timestamp_mixin import TimestampMixin
 
 if TYPE_CHECKING:
@@ -10,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.project import Project
     from app.models.payment import Payment
+    from app.models.document import MediaFile
 
 class PaymentStatus(str, Enum):
     PAID = "paid"
@@ -59,6 +61,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     payment_plan: bool = False
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     project_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
+    media_files: List["MediaFile"] = Relationship(back_populates="unit")
     handover_date: Optional[datetime] = None
     payment_duration: PaymentDuration | None = PaymentDuration.MONTHLY
     deleted: bool | None = False
@@ -69,6 +72,10 @@ class Unit(SQLModel, TimestampMixin, table=True):
     client: Optional["User"] = Relationship(back_populates="units")
     project: Optional["Project"] = Relationship(back_populates="units")
     payments: List["Payment"] = Relationship(back_populates="unit")
+
+    @property
+    def images(self) -> List[str]:
+        return [media.file_path for media in self.media_files if media.file_type == "image"]
 
     @property
     def warranty(self) -> Optional[str]:

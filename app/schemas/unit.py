@@ -80,6 +80,7 @@ class UnitRead(UnitBase):
     warranty: Optional[WarrantyInfo]
     payment_summary: Optional[PaymentSummary]
     graph_data: Optional[list[GraphDataPoint]]
+    images: Optional[List[str]] = None  # Assuming images are stored as URLs or file paths
     total_paid: float = 0
     created_at: datetime
     updated_at: datetime
