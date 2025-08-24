@@ -15,11 +15,13 @@ class PaymentStatus(str, Enum):
 
 class Payment(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
+    reason_for_payment: Optional[str] = None
     amount: float
     due_date: datetime | None = None
     status: PaymentStatus = PaymentStatus.NOT_PAID
     deleted: bool = False
     reason_for_delete: Optional[str] = None
+    payment_date: datetime | None = None
 
     unit_id: UUID = Field(foreign_key="unit.id", nullable=False)
     unit: Optional["Unit"] = Relationship(back_populates="payments")

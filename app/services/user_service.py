@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException
 from pydantic import EmailStr
-from sqlmodel import Session, select, or_
+from sqlmodel import Session, select, or_, desc
 from app.models.user import User, Role
 from app.core.security import hash_password, verify_password
 import random
-from typing import Union
+from typing import Any, Union
 from app.schemas.paging import Paging
 from app.schemas.user import UserCreate, RegisterRequest, UserUpdate
 from app.utility.paging import paginate
@@ -57,8 +57,32 @@ def authenticate_user(session: Session, email: str, password: str)  -> User | No
     return user
 
 # Retrieve all users
-def get_all_users(session: Session, paging: Paging) -> dict[str, Union[list[User], int]]:
+def get_all_users(session: Session, paging: Paging, filter: dict[str, Any] | None = None,
+    q: str | None = None) -> dict[str, Union[list[User], int]]:
     query = select(User)
+
+    # role / exact-field filters (e.g., {"role": Role.ADMIN})
+    if filter:
+        query = query.filter_by(**filter)
+
+    # free-text search across common fields
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        query = query.where(
+            or_(
+                User.fullname.ilike(like),
+                User.email.ilike(like),
+                User.phone.ilike(like),
+            )
+        )
+
+    # newest first when created_at exists
+    try:
+        query = query.order_by(desc(User.created_at))
+    except Exception:
+        # if model lacks created_at, just skip ordering
+        pass
+
     users, total = paginate(session, query, paging)
 
     return {"data": users, "total": total}

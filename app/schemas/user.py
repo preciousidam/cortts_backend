@@ -38,7 +38,6 @@ class UserBase(BaseModel):
     email: str
     phone: str
     address: Optional[str] = None
-    # role: Role = Role.CLIENT
     commission_rate: Optional[float] = None
     is_internal: Optional[bool] = None
     created_by: Optional[str] = None
@@ -53,6 +52,7 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: UUID
     is_verified: bool
+    role: Role = Role.CLIENT
     created_at: datetime
     updated_at: datetime
 

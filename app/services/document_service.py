@@ -1,9 +1,12 @@
+from itertools import count
 from sqlmodel import Session, select
 from typing import Sequence
+from uuid import UUID
 from datetime import datetime, timezone
 from app.models.document import DocumentTemplate, SignedDocument
+from app.schemas.media import MediaFileReadSchema
 from .notification_service import create_notification
-from app.schemas.document import DocumentTemplateCreate, DocumentTemplateRead, SignedDocumentCreate, SignedDocumentRead, DocumentTemplateUpdate, SignedDocumentUpdate
+from app.schemas.document import DocumentKind, DocumentRead, DocumentTemplateCreate, DocumentTemplateRead, ReadAllDocuments, SignedDocumentCreate, SignedDocumentRead, DocumentTemplateUpdate, SignedDocumentUpdate
 
 
 # Document Template
@@ -19,8 +22,10 @@ def create_template(session: Session, data: DocumentTemplateCreate) -> DocumentT
     if ("media_file_id" not in data_dict or
             data_dict["media_file_id"] is None):
         return None
-        
-    record = DocumentTemplate(**data_dict)
+
+    record = DocumentTemplate(name=data_dict["name"],
+                              media_file_id=data_dict["media_file_id"],
+                              unit_id=data_dict["unit_id"])
     session.add(record)
     session.commit()
     session.refresh(record)
@@ -187,3 +192,45 @@ def get_signed_docs_for_agent(session: Session, agent_id: str) -> Sequence[Signe
     :return: List of SignedDocument objects associated with the agent
     """
     return session.exec(select(SignedDocument).where(SignedDocument.agent_id == agent_id)).all()
+
+def get_documents_for_unit(session: Session, unit_id: UUID) -> ReadAllDocuments:
+    """
+    Retrieves all documents (both templates and signed) associated with a specific unit.
+    :param session: SQLAlchemy session object
+    :param unit_id: ID of the unit
+    :return: List of DocumentTemplate and SignedDocument objects associated with the unit
+    """
+    templates = session.exec(select(DocumentTemplate).where(DocumentTemplate.unit_id == unit_id)).all()
+    signed_docs = session.exec(select(SignedDocument).where(SignedDocument.unit_id == unit_id)).all()
+
+    docs: list[DocumentRead] = []
+    # map templates
+    for t in templates:
+        docs.append(
+            DocumentRead(
+                id=t.id,
+                name=t.name,
+                unit_id=t.unit_id,
+                kind=DocumentKind.TEMPLATE,
+                created_at=t.created_at,
+                media_file=MediaFileReadSchema.model_validate(t.media_file.model_dump()) if t.media_file else None,
+            )
+        )
+
+    # map signed docs
+    for s in signed_docs:
+        docs.append(
+            DocumentRead(
+                id=s.id,
+                name=s.name,
+                unit_id=s.unit_id,
+                kind=DocumentKind.SIGNED,
+                created_at=s.created_at,
+                media_file=MediaFileReadSchema.model_validate(s.media_file.model_dump()) if s.media_file else None,
+            )
+        )
+
+    # latest first
+    docs.sort(key=lambda d: d.created_at or datetime.min, reverse=True)
+
+    return ReadAllDocuments(data=docs, count=len(docs))

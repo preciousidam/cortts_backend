@@ -1,5 +1,5 @@
 from uuid import UUID
-from sqlmodel import Session, select, func
+from sqlmodel import Session, select, desc
 from app.models.unit import Unit
 from app.models.payment import Payment, PaymentStatus
 from app.schemas.paging import Paging
@@ -50,7 +50,7 @@ def create_unit(session: Session, data: UnitCreate) -> Unit:
     return unit
 
 def get_all_units(session: Session, paging: Paging) -> dict[str, list[UnitRead] | int]:
-    query = select(Unit).where(Unit.deleted == False)
+    query = select(Unit).where(Unit.deleted == False).order_by(desc(Unit.created_at))
     units, total = paginate(session, query, paging)
 
     return {"data": units, "total": total}
@@ -72,7 +72,8 @@ def update_unit(session: Session, unit_id: UUID, data: UnitUpdate) -> Unit | Non
     if not unit or unit.deleted:
         return None
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(unit, field, value)
+        if field != "agents":
+            setattr(unit, field, value)
     session.add(unit)
     session.commit()
     session.refresh(unit)
@@ -164,8 +165,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
 
     session.commit()
 
-def warranty_info(unit: Unit)  -> dict[str, bool | str | None]:
-    return {"expire_at": unit.warranty, "isValid": date.today() <= datetime.strptime(unit.warranty, "%Y-%m-%d").date()} if unit.warranty else {"isValid": False, "expire_at": None}
+def warranty_info(unit: Unit)  -> dict[str, bool | str] | None:
+    return unit.warranty
 
 def payment_summary(unit: Unit)  -> dict[str, float | int | str | None]:
     return unit.payment_summary

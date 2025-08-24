@@ -3,11 +3,15 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.db.session import get_session
+from app.schemas.payment import PaymentRead
+from app.services.payment_service import get_payments_by_unit
 from app.services.unit_service import (
     create_unit, get_all_units, get_unit_by_id, update_unit,
     soft_delete_unit, warranty_info, payment_summary, graph_data
 )
-from app.schemas.unit import UnitCreate, UnitUpdate, UnitRead, PaymentSummary, GraphDataPoint, ReadAllUnits
+from app.services.document_service import get_documents_for_unit
+from app.schemas.document import DocumentRead, ReadAllDocuments
+from app.schemas.unit import SingleUnit, UnitCreate, UnitPayments, UnitUpdate, UnitRead, PaymentSummary, GraphDataPoint, ReadAllUnits
 from app.schemas.paging import Paging
 from app.auth.dependencies import get_current_user
 from app.models.user import Role
@@ -22,7 +26,7 @@ def create(data: UnitCreate, session: Session = Depends(get_session)):
 def all_units(paging: Paging = Depends(), session: Session = Depends(get_session)):
     return get_all_units(session, paging)
 
-@router.get("/{unit_id}", response_model=UnitRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+@router.get("/{unit_id}", response_model=SingleUnit, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
 def get(unit_id: UUID, session: Session = Depends(get_session)):
     unit = get_unit_by_id(session, unit_id)
     if not unit or unit.deleted:
@@ -50,6 +54,13 @@ def get_warranty(unit_id: UUID, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Unit not found")
     return warranty_info(unit)
 
+@router.get("/{unit_id}/payments", response_model=UnitPayments, dependencies=[Depends(get_current_user([Role.ADMIN, Role.CLIENT]))])
+def get_payments(unit_id: UUID, paging: Paging = Depends(), session: Session = Depends(get_session)):
+    unit = get_unit_by_id(session, unit_id)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    return get_payments_by_unit(session, unit_id, paging)
+
 @router.get("/{unit_id}/payment-summary", response_model=PaymentSummary, dependencies=[Depends(get_current_user([Role.ADMIN, Role.CLIENT]))])
 def get_payment_summary(unit_id: UUID, session: Session = Depends(get_session)):
     unit = get_unit_by_id(session, unit_id)
@@ -63,3 +74,11 @@ def get_graph_data(unit_id: UUID, session: Session = Depends(get_session)):
     if not unit:
         raise HTTPException(status_code=404, detail="Unit not found")
     return graph_data(unit)
+
+
+@router.get("/{unit_id}/documents", response_model=ReadAllDocuments, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+def get_documents(unit_id: UUID, session: Session = Depends(get_session)):
+    unit = get_unit_by_id(session, unit_id)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Unit not found")
+    return get_documents_for_unit(session, unit_id)

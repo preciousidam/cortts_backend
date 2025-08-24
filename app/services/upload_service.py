@@ -9,6 +9,8 @@ from app.models.document import MediaFile
 from app.core.config import settings
 from fastapi.responses import StreamingResponse
 
+from app.schemas.media import UploadMediaFile
+
 client = boto3.session.Session().client(service_name='s3', aws_access_key_id=settings.R2_ACCESS_KEY_ID, aws_secret_access_key=settings.R2_SECRET_ACCESS_KEY, endpoint_url=settings.R2_ENDPOINT_URL)
 
 def generate_random_file_name(file_name: str) -> str:
@@ -16,12 +18,12 @@ def generate_random_file_name(file_name: str) -> str:
     Generate a random file name based on the original file name.
     This can be used to avoid conflicts in file storage.
     """
-    
+
     base, ext = os.path.splitext(file_name)
     return f"{base}_{uuid4().hex}{ext}"
 
 
-def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) -> MediaFile:
+def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile, unit_id: UUID | None, project_id: UUID | None, user_id: UUID | None) -> MediaFile:
     """
     Create a new media file record in the database.
     """
@@ -29,7 +31,7 @@ def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) 
     size = media_file_data.size if media_file_data.size else 0
     content_type = media_file_data.content_type if media_file_data.content_type else "application/octet-stream"
     file_name = media_file_data.filename if media_file_data.filename else generate_random_file_name(media_file_data.filename or "")
-    
+
 
     client.upload_fileobj(
         media_file_data.file,
@@ -47,6 +49,8 @@ def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) 
         file_type=content_type,
         file_name=file_name,
         uploaded_by=added_by,
+        unit_id=unit_id,
+        project_id=project_id,
         file_path=f"{settings.R2_PUBLIC_URL}/{file_name}",
         deleted=False
     )
@@ -55,13 +59,13 @@ def create_media_file(db: Session, added_by: UUID, media_file_data: UploadFile) 
     db.refresh(media_file)
     return media_file
 
-def create_media_files(db: Session, added_by: UUID, media_files: Sequence[UploadFile]) -> Sequence[MediaFile]:
+def create_media_files(db: Session, added_by: UUID, media_files: Sequence[UploadFile], unit_id: UUID | None, project_id: UUID | None, user_id: UUID | None) -> Sequence[MediaFile]:
     """
     Create multiple media file records in the database.
     """
     created_files = []
     for media_file in media_files:
-        created_file = create_media_file(db, added_by, media_file)
+        created_file = create_media_file(db, added_by, media_file, unit_id, project_id, user_id)
         created_files.append(created_file)
     return created_files
 

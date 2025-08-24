@@ -22,10 +22,6 @@ class MediaFile(SQLModel, TimestampMixin, table=True):
     project: Optional["Project"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
     )
-    user_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
-    user: Optional["User"] = Relationship(
-        sa_relationship_kwargs={"lazy": "joined"}
-    )
     deleted: bool = False
     uploaded_by: Optional[UUID] = Field(default=None, foreign_key="user.id")
     uploader: Optional["User"] = Relationship(

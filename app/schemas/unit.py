@@ -1,9 +1,17 @@
+from enum import Enum
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from app.models.unit_agent_link import AgentRole
-from app.models.unit import UnitCompletionStatus  # Assuming 'Unit' is defined in models/unit.py
+from app.models.unit import UnitCompletionStatus
+from app.schemas.payment import PaymentRead
+
+class PaymentDuration(str, Enum):
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    BI_ANNUALLY = "bi_annually"
+    ANNUALLY = "annually"
 class AgentAssignment(BaseModel):
     agent_id: UUID
     role: AgentRole
@@ -22,9 +30,10 @@ class UnitBase(BaseModel):
     warranty_period: Optional[int] = 0
     client_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
-    agent_id: Optional[UUID] = None
+    # agent_id: Optional[UUID] = None
     sales_rep: Optional[str] = None
     development_status: Optional[UnitCompletionStatus] = UnitCompletionStatus.NOT_STARTED
+    payment_duration: Optional[str] = None  # e.g., "MONTHLY", "QUARTERLY", etc.
 
 class UnitCreate(UnitBase):
     agents: list[AgentAssignment] | None = []
@@ -48,7 +57,7 @@ class UnitUpdate(BaseModel):
     warranty_period: Optional[int] = None
     client_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
-    agent_id: Optional[UUID] = None
+    # agent_id: Optional[UUID] = None
     sales_rep: Optional[UUID] = None
     agents: list[AgentAssignment] | None = None
     development_status: Optional[UnitCompletionStatus] = None
@@ -56,6 +65,7 @@ class UnitUpdate(BaseModel):
     reason_for_delete: Optional[str] = None
 
 class PaymentSummary(BaseModel):
+    total: float
     outstanding: float
     total_deposit: float
     total_unpaid: float
@@ -66,6 +76,7 @@ class PaymentSummary(BaseModel):
     installment_amount: float
     total_sch: float
     installment_diff: float
+    duration: Optional[str] = None  # e.g., "MONTHLY", "QUARTERLY", etc.
 
 class GraphDataPoint(BaseModel):
     month: int
@@ -73,6 +84,14 @@ class GraphDataPoint(BaseModel):
 class WarrantyInfo(BaseModel):
     isValid: bool = False
     expire_at: Optional[str] = None
+
+class UserRead(BaseModel):
+    id: UUID
+    fullname: str
+    email: str
+    phone: str | None = None
+    is_verified: bool
+
 class UnitRead(UnitBase):
     id: UUID
     deleted: bool
@@ -80,8 +99,9 @@ class UnitRead(UnitBase):
     warranty: Optional[WarrantyInfo]
     payment_summary: Optional[PaymentSummary]
     graph_data: Optional[list[GraphDataPoint]]
-    images: Optional[List[str]] = None  # Assuming images are stored as URLs or file paths
+    images: Optional[List[str]] = []  # Assuming images are stored as URLs or file paths
     total_paid: float = 0
+    client: Optional[UserRead] = None
     created_at: datetime
     updated_at: datetime
 
@@ -89,6 +109,17 @@ class UnitRead(UnitBase):
         "from_attributes": True
     }
 
+class Agent(BaseModel):
+    agent: UserRead
+    role: AgentRole
+
+class SingleUnit(UnitRead):
+    unit_agents: List[Agent] = []
+
 class ReadAllUnits(BaseModel):
     data: List[UnitRead]
+    total: int
+
+class UnitPayments(BaseModel):
+    data: list[PaymentRead]
     total: int

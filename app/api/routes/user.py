@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.db.session import get_session
 from app.schemas.paging import Paging
+from app.schemas.unit import UnitCreate
 from app.schemas.user import UserCreate, UserList, UserRead, UserUpdate
 from app.services.user_service import create_user, get_all_users, get_user_by_id, soft_delete_user, update_user
 from app.auth.dependencies import get_current_user
@@ -9,17 +10,20 @@ from app.models.user import Role, User
 
 router = APIRouter()
 
-@router.post("/", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN]))])
+@router.post("/", response_model=UnitCreate, dependencies=[Depends(get_current_user([Role.ADMIN]))])
 def create(data: UserCreate, session: Session = Depends(get_session)):
     return create_user(session, data)
 
 @router.get("/", response_model=UserList, dependencies=[Depends(get_current_user([Role.ADMIN]))])
-def all(paging: Paging = Depends(), session: Session = Depends(get_session)):
-    return get_all_users(session, paging)
+def all(paging: Paging = Depends(), session: Session = Depends(get_session), role: Role | None = None, q: str | None = None):
+    filter = {}
+    if role:
+        filter["role"] = role
+    return get_all_users(session, paging, filter, q)
 
 @router.get("/me", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.CLIENT, Role.AGENT]))])
 def get_me(current_user: User = Depends(get_current_user())):
-    return current_user 
+    return current_user
 
 @router.get("/{user_id}", response_model=UserRead, dependencies=[Depends(get_current_user([Role.ADMIN, Role.CLIENT, Role.AGENT]))])
 def get(user_id: str, session: Session = Depends(get_session)):

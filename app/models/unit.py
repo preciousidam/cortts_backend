@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List, Dict, Any, TYPE_CHECKING
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from uuid import UUID, uuid4
 from enum import Enum
 
@@ -75,18 +75,18 @@ class Unit(SQLModel, TimestampMixin, table=True):
 
     @property
     def images(self) -> List[str]:
-        return [media.file_path for media in self.media_files if media.file_type == "image"]
+        return [media.file_path for media in self.media_files if media.file_type == "image/jpeg" or media.file_type == "image/png" or media.file_type == "image/jpg"]
 
     @property
-    def warranty(self) -> Optional[str]:
+    def warranty(self) -> Optional[Dict[str, Any]]:
         if not self.handover_date:
             return None
         warranty_end = self.handover_date + timedelta(days=(self.warranty_period or 0) * 30)
-        return warranty_end.strftime("%Y-%m-%dT%H:%M:%S%z")
+        return { "expire_at": warranty_end.strftime("%Y-%m-%dT%H:%M:%S%z"), "isValid": date.today() <= warranty_end.date() } if warranty_end else None
 
     @property
     def payment_summary(self) -> Dict[str, Any]:
-        total = self.amount - self.discount
+        total = self.amount - (self.amount * self.discount / 100)
         total_deposit = self.total_paid
         outstanding = total - total_deposit
         total_sch = self.installment
@@ -106,6 +106,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
             installment_diff = outstanding
 
         return {
+            "total": round(total, 2),
             "outstanding": round(outstanding, 2),
             "total_deposit": round(total_deposit, 2),
             "total_unpaid": round(total - total_deposit, 2),
@@ -116,6 +117,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
             "installment_amount": installment_amount,
             "total_sch": total_sch,
             "installment_diff": round(installment_diff, 2),
+            "duration": self.payment_duration.value if self.payment_duration else None
         }
 
     @property

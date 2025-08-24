@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from typing import Optional
+from fastapi import APIRouter, Form, HTTPException, UploadFile, File, Depends
 import uuid
 import os
 
@@ -6,22 +7,35 @@ from sqlmodel import Session
 from app.auth.dependencies import get_current_user
 from app.db.session import get_session
 from app.models.user import Role, User
-from app.schemas.media import MediaFileReadSchema
+from app.schemas.media import MediaFileReadSchema, UploadMediaFile
 from app.services.upload_service import create_media_file, create_media_files, download_media_file, get_all_media_files, get_media_file
 
 router = APIRouter()
 
-@router.post("/upload-media/", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
-async def upload_media(file: UploadFile = File(...), current_user: User = Depends(get_current_user()), session: Session = Depends(get_session)):
+@router.post("/upload-media/", response_model=MediaFileReadSchema, dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def upload_media(file: UploadFile = File(...),
+    unit_id: Optional[uuid.UUID] = Form(None),
+    project_id: Optional[uuid.UUID] = Form(None),
+    user_id: Optional[uuid.UUID] = Form(None),
+    current_user: User = Depends(get_current_user()),
+    session: Session = Depends(get_session)):
 
-    return create_media_file(session, current_user.id, file)
+    if not file:
+        raise HTTPException(status_code=400, detail="No file provided")
 
-@router.post("/upload-multiple-media/", dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
-async def upload_multiple_media(files: list[UploadFile] = File(...), current_user: User = Depends(get_current_user()), session: Session = Depends(get_session)):
+    return create_media_file(session, current_user.id, file, unit_id, project_id, user_id)
+
+@router.post("/upload-multiple-media/", response_model=list[MediaFileReadSchema], dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
+async def upload_multiple_media(files: list[UploadFile] = File(...),
+    unit_id: Optional[uuid.UUID] = Form(None),
+    project_id: Optional[uuid.UUID] = Form(None),
+    user_id: Optional[uuid.UUID] = Form(None),
+    current_user: User = Depends(get_current_user()),
+    session: Session = Depends(get_session)):
     if not files:
         raise HTTPException(status_code=400, detail="No files provided")
 
-    return create_media_files(session, current_user.id, files)
+    return create_media_files(session, current_user.id, files, unit_id, project_id, user_id)
 
 @router.get("/media", response_model=list[MediaFileReadSchema], dependencies=[Depends(get_current_user([Role.ADMIN, Role.AGENT, Role.CLIENT]))])
 async def get_all_media(session: Session = Depends(get_session)):
