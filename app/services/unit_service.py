@@ -9,7 +9,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from app.core.config import settings
 from app.utility.paging import paginate
-from app.schemas.unit import UnitCreate, UnitUpdate, UnitRead
+from app.schemas.unit import PaymentDuration, UnitCreate, UnitUpdate, UnitRead
 from app.schemas.unit_agent_link import UnitAgentLinkCreate, UnitAgentLinkRead
 
 def create_unit(session: Session, data: UnitCreate) -> Unit:
@@ -115,46 +115,59 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
         session.delete(p)
     session.commit()
 
+    # 2) Normalize inputs
+    amount = float(unit.amount or 0)
+    discount_pct = float(unit.discount or 0)  # percent (e.g., 12.0 = 12%)
+    initial = float(unit.expected_initial_payment or 0)
+    installments = int(unit.installment or 0)
+    plan_enabled = bool(unit.payment_plan)
+    purchase_dt = unit.purchase_date or datetime.utcnow()
+
+    # If plan disabled, nothing to schedule here.
+    if not plan_enabled or installments <= 0:
+        session.commit()
+        return
+
     # Recalculate new monthly payments
-    total = unit.amount - ((unit.discount or 0) * unit.amount)
-    remaining = total - (unit.expected_initial_payment or 0)
-    monthly = round(remaining / unit.installment, 2) if unit.installment else 0
+    total = amount - (discount_pct * amount)
+    remaining = total - initial
+    monthly = round(remaining / installments, 2) if installments else 0
 
     # If initial payment was made, add it as a paid payment
-    if unit.expected_initial_payment:
+    if initial > 0:
         session.add(Payment(
-            amount=unit.expected_initial_payment,
-            due_date=unit.purchase_date,
+            amount=initial,
+            due_date=purchase_dt,
             status=PaymentStatus.NOT_PAID,
             unit_id=unit.id
         ))
 
-    for i in range(unit.installment):
-        if unit.payment_duration == "MONTHLY":
-            due = unit.purchase_date + relativedelta(months=i+1) if unit.purchase_date else None
+    for i in range(installments):
+        if unit.payment_duration == PaymentDuration.MONTHLY:
+            due = purchase_dt + relativedelta(months=i+1) if purchase_dt else None
             session.add(Payment(
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
                 unit_id=unit.id
             ))
-        elif unit.payment_duration == "QUARTERLY":
-            due = unit.purchase_date + relativedelta(months=(i+1)*3) if unit.purchase_date else None
+        elif unit.payment_duration == PaymentDuration.QUARTERLY:
+            due = purchase_dt + relativedelta(months=(i+1)*3) if purchase_dt else None
             session.add(Payment(
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
                 unit_id=unit.id
             ))
-        elif unit.payment_duration == "BI_ANNUALLY":
-            due = unit.purchase_date + relativedelta(months=(i+1)*6) if unit.purchase_date else None
+        elif unit.payment_duration == PaymentDuration.BI_ANNUALLY:
+            due = purchase_dt + relativedelta(months=(i+1)*6) if purchase_dt else None
             session.add(Payment(
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
                 unit_id=unit.id
             ))
-        elif unit.payment_duration == "ANNUALLY":
+        elif unit.payment_duration == PaymentDuration.ANNUALLY:
             due = unit.purchase_date + relativedelta(years=i+1) if unit.purchase_date else None
             session.add(Payment(
                 amount=monthly,
