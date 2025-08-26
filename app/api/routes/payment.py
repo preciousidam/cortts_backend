@@ -5,7 +5,7 @@ from app.schemas.paging import Paging
 from app.services.payment_service import (
     create_payment, get_all_payments, get_payment_by_id, update_payment, soft_delete_payment
 )
-from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentRead
+from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentRead, AllPayment
 from app.auth.dependencies import get_current_user
 from app.models.user import Role
 
@@ -15,7 +15,7 @@ router = APIRouter()
 def create(data: PaymentCreate, session: Session = Depends(get_session)):
     return create_payment(session, data)
 
-@router.get("/", response_model=list[PaymentRead], dependencies=[Depends(get_current_user([Role.ADMIN]))])
+@router.get("/", response_model=AllPayment, dependencies=[Depends(get_current_user([Role.ADMIN]))])
 def all(paging: Paging = Depends(), session: Session = Depends(get_session)):
     return get_all_payments(session, paging)
 

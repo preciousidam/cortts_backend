@@ -31,3 +31,7 @@ class PaymentRead(PaymentBase):
     reason_for_delete: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+class AllPayment(BaseModel):
+    data: list[PaymentRead]
+    total: int
