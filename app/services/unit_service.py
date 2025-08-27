@@ -117,7 +117,7 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
 
     # 2) Normalize inputs
     amount = float(unit.amount or 0)
-    discount_pct = float(unit.discount or 0)  # percent (e.g., 12.0 = 12%)
+    discount_pct = float(unit.discount or 0)/100  # percent (e.g., 12.0 = 12%)
     initial = float(unit.expected_initial_payment or 0)
     installments = int(unit.installment or 0)
     plan_enabled = bool(unit.payment_plan)
@@ -139,7 +139,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
             amount=initial,
             due_date=purchase_dt,
             status=PaymentStatus.NOT_PAID,
-            unit_id=unit.id
+            unit_id=unit.id,
+            reason_for_payment="Initial Payment"
         ))
 
     for i in range(installments):
@@ -149,7 +150,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
-                unit_id=unit.id
+                unit_id=unit.id,
+                reason_for_payment=f"Installment {i+1}"
             ))
         elif unit.payment_duration == PaymentDuration.QUARTERLY:
             due = purchase_dt + relativedelta(months=(i+1)*3) if purchase_dt else None
@@ -157,7 +159,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
-                unit_id=unit.id
+                unit_id=unit.id,
+                reason_for_payment=f"Installment {i+1}"
             ))
         elif unit.payment_duration == PaymentDuration.BI_ANNUALLY:
             due = purchase_dt + relativedelta(months=(i+1)*6) if purchase_dt else None
@@ -165,7 +168,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
-                unit_id=unit.id
+                unit_id=unit.id,
+                reason_for_payment=f"Installment {i+1}"
             ))
         elif unit.payment_duration == PaymentDuration.ANNUALLY:
             due = unit.purchase_date + relativedelta(years=i+1) if unit.purchase_date else None
@@ -173,7 +177,8 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
                 amount=monthly,
                 due_date=due,
                 status=PaymentStatus.NOT_PAID,
-                unit_id=unit.id
+                unit_id=unit.id,
+                reason_for_payment=f"Installment {i+1}"
             ))
 
     session.commit()

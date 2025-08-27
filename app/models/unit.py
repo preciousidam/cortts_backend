@@ -88,7 +88,7 @@ class Unit(SQLModel, TimestampMixin, table=True):
     def payment_summary(self) -> Dict[str, Any]:
         total = self.amount - (self.amount * self.discount / 100)
         total_deposit = self.total_paid
-        outstanding = total - total_deposit
+        outstanding = total - total_deposit - self.expected_initial_payment
         total_sch = self.installment
         installment_amount = round(max(outstanding, 0) / total_sch, 2)
 
