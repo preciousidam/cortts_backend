@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlmodel import Sequence, Session, select
 from app.models.payment import Payment
 from uuid import UUID
@@ -35,12 +36,15 @@ def update_payment(session: Session, payment_id: str, data: PaymentUpdate) -> Pa
     if not payment or payment.deleted:
         return None
     for field, value in data.model_dump(exclude_unset=True).items():
-        setattr(payment, field, value)
-
         if field == 'status' and value == "paid":
             payment.payment_date = datetime.now()
+            if not payment.media_id:
+                raise HTTPException(status_code=400, detail="Media ID (receipt) is required for paid payments")
         elif field == 'status' and (value == "not_paid" or value == "overdue"):
             payment.payment_date = None
+            payment.media_id = None
+        else:
+            setattr(payment, field, value)
 
     session.add(payment)
     session.commit()

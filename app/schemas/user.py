@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from app.models.unit import UnitCompletionStatus
 from app.models.user import Role
 from pydantic import BaseModel
 from typing import Optional
@@ -72,3 +73,18 @@ class UserUpdate(BaseModel):
 class UserList(BaseModel):
     data: list[UserRead]
     total: int
+
+class SingleUser(UserRead):
+    units: Optional[list["ClientUnit"]] = []
+
+class ClientUnit(BaseModel):
+    id: UUID
+    name: str
+    amount: float
+    expected_initial_payment: float
+    type: Optional[str] = None
+    purchase_date: datetime | None = None
+    installment: int = 1
+    payment_plan: bool = False
+    handover_date: Optional[datetime] = None
+    development_status: Optional[UnitCompletionStatus] = UnitCompletionStatus.NOT_STARTED

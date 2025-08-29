@@ -25,7 +25,7 @@ def create_doc_template(data: DocumentTemplateCreate, session: Session = Depends
 
     media = create_template(session, data)
     if not media:
-        raise HTTPException(status_code=400, detail="Failed to create document template")  
+        raise HTTPException(status_code=400, detail="Failed to create document template")
 
     return media
 

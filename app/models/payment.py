@@ -22,6 +22,7 @@ class Payment(SQLModel, TimestampMixin, table=True):
     deleted: bool = False
     reason_for_delete: Optional[str] = None
     payment_date: datetime | None = None
+    media_id: UUID | None = Field(default=None, foreign_key="mediafile.id")
 
     unit_id: UUID = Field(foreign_key="unit.id", nullable=False)
     unit: Optional["Unit"] = Relationship(back_populates="payments")

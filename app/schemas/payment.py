@@ -9,6 +9,10 @@ class PaymentStatus(str, Enum):
     NOT_PAID = "not_paid"
     OVERDUE = "overdue"
 
+class Unit(BaseModel):
+    id: UUID
+    name: str
+
 class PaymentBase(BaseModel):
     reason_for_payment: Optional[str] = 'N/A'
     amount: float
@@ -29,6 +33,7 @@ class PaymentRead(PaymentBase):
     id: UUID
     deleted: bool
     reason_for_delete: Optional[str]
+    unit: Unit
     created_at: datetime
     updated_at: datetime
 
