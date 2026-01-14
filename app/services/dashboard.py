@@ -6,8 +6,9 @@ from app.models.payment import Payment
 from app.models.project import Project
 from app.models.unit import PaymentStatus, Unit
 from app.models.user import Role, User
+from app.schemas.dashboard import DashboardSummary, Unit as UnitSchema
 
-def get_admin_dashboard(session: Session) -> dict[str, Any]:
+def get_admin_dashboard(session: Session) -> DashboardSummary:
     total_units = session.exec(select(func.count()).select_from(Unit).where(Unit.deleted == False)).first() or 0
     total_payments = session.exec(select(func.count()).select_from(Payment).where(Payment.deleted == False)).first() or 0
     total_users = session.exec(select(func.count()).select_from(User).where(and_(User.deleted == False, User.role == Role.CLIENT))).first() or 0
@@ -46,12 +47,29 @@ def get_admin_dashboard(session: Session) -> dict[str, Any]:
             if item["month"] == months[month_start.month - 1]:
                 item["amount"] = float(total or 0.0)
 
-    return {
-        "total_units": total_units,
-        "total_payments": total_payments,
-        "total_users": total_users,
-        "total_revenue": total_revenue,
-        "total_outstanding": total_outstanding,
-        "total_projects": total_project,
-        "monthly_revenue": monthly_revenue_list
-    }
+    # Return first 20 units
+    first_20_units = session.exec(select(Unit).where(Unit.deleted == False).limit(20)).all()
+
+    # format units to match schema
+    unit_previews: list[UnitSchema] = [
+        UnitSchema(
+            id=str(unit.id),
+            name=unit.name,
+            projectName=unit.project.name if unit.project else "",
+            status=unit.status.value,
+            price=unit.amount,
+            image=unit.images[0] if unit.images else None,
+        )
+        for unit in first_20_units
+    ]
+
+    return DashboardSummary(
+        total_units=total_units,
+        total_payments=total_payments,
+        total_users=total_users,
+        total_revenue=total_revenue,
+        total_outstanding=total_outstanding,
+        total_projects=total_project,
+        monthly_revenue=monthly_revenue_list,
+        units=unit_previews,
+    )

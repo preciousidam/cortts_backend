@@ -48,6 +48,12 @@ class PaymentDuration(str, Enum):
     BI_ANNUALLY = "bi_annually"
     ANNUALLY = "annually"
 
+class Status(str, Enum):
+    SOLD = "sold"
+    AVAILABLE = "available"
+    UNDER_OFFER = "under_offer"
+    DELETED = "deleted"
+
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
@@ -135,3 +141,14 @@ class Unit(SQLModel, TimestampMixin, table=True):
     @property
     def total_paid(self) -> float:
         return sum(p.amount for p in self.payments if p.status.value == PaymentStatus.PAID)
+
+    @property
+    def status(self) -> Status:
+        # Determine if unit is sold, available, or under offer
+        if self.client_id and not self.deleted:
+            return Status.SOLD
+        elif not self.client_id and not self.deleted:
+            return Status.AVAILABLE
+        elif self.deleted:
+            return Status.DELETED
+        return Status.UNDER_OFFER

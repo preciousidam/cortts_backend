@@ -4,7 +4,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from app.models.unit_agent_link import AgentRole
-from app.models.unit import UnitCompletionStatus
+from app.models.unit import UnitCompletionStatus, Status
 from app.schemas.payment import PaymentRead
 
 class PaymentDuration(str, Enum):
@@ -102,6 +102,7 @@ class UnitRead(UnitBase):
     images: Optional[List[str]] = []  # Assuming images are stored as URLs or file paths
     total_paid: float = 0
     client: Optional[UserRead] = None
+    status: Status
     created_at: datetime
     updated_at: datetime
 
