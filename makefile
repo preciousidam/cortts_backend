@@ -44,7 +44,7 @@ seed-admin:
 	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_admin.py
 
 seed-all:
-	make seed-admin && make seed-unit-agent-client && make seed-docs
+	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_all.py
 
 test:
 	PYTHONPATH=$(PYTHONPATH) python -m pytest -v

@@ -1,12 +1,12 @@
 from typing import Any
 from sqlmodel import Session, select, func, and_
-from datetime import datetime
+from datetime import datetime,timezone
 from dateutil.relativedelta import relativedelta
 from app.models.payment import Payment
 from app.models.project import Project
 from app.models.unit import PaymentStatus, Unit
 from app.models.user import Role, User
-from app.schemas.dashboard import DashboardSummary, Unit as UnitSchema
+from app.schemas.dashboard import DashboardSummary, MonthlyRevenueItem, Unit as UnitSchema
 
 def get_admin_dashboard(session: Session) -> DashboardSummary:
     total_units = session.exec(select(func.count()).select_from(Unit).where(Unit.deleted == False)).first() or 0
@@ -34,18 +34,18 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
     rows = session.exec(stmt).all()
 
     # Build a dict for the last 12 months, defaulting to 0
-    now = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    now = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_12 = [(now - relativedelta(months=i)) for i in range(11, -1, -1)]
     # Build a list for the last 12 months, defaulting to 0
     monthly_revenue_list = [
-        {"month": months[d.month - 1], "amount": 0.0} for d in last_12
+        MonthlyRevenueItem(month=months[d.month - 1], amount=0.0) for d in last_12
     ]
 
     # Fill with actual sums returned from the DB
     for month_start, total in rows:
         for item in monthly_revenue_list:
-            if item["month"] == months[month_start.month - 1]:
-                item["amount"] = float(total or 0.0)
+            if item.month == months[month_start.month - 1]:
+                item.amount = float(total or 0.0)
 
     # Return first 20 units
     first_20_units = session.exec(select(Unit).where(Unit.deleted == False).limit(20)).all()
@@ -62,6 +62,8 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         )
         for unit in first_20_units
     ]
+
+    print(monthly_revenue_list)
 
     return DashboardSummary(
         total_units=total_units,
