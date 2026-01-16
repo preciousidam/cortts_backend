@@ -2,9 +2,9 @@ from typing import Any
 from sqlmodel import Session, select, func, and_
 from datetime import datetime,timezone
 from dateutil.relativedelta import relativedelta
-from app.models.payment import Payment
+from app.models.payment import Payment, PaymentStatus
 from app.models.project import Project
-from app.models.unit import PaymentStatus, Unit
+from app.models.unit import Unit
 from app.models.user import Role, User
 from app.schemas.dashboard import DashboardSummary, MonthlyRevenueItem, Unit as UnitSchema
 
