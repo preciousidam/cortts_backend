@@ -68,7 +68,7 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         for unit in first_20_units
     ]
 
-    cutoff = datetime.now(timezone.utc) - relativedelta(days=30)
+    cutoff = datetime.now(timezone.utc) - relativedelta(days=365)
     payment_date_column = Payment.payment_date
 
     recent_payments = list(
