@@ -1,20 +1,23 @@
+from decimal import Decimal
+import uuid
 from pydantic import BaseModel
 from app.schemas.payment import PaymentStatus
 
 class Unit(BaseModel):
-    id: str
+    id: uuid.UUID
     name: str
     projectName: str
     status: str
-    price: float
+    price: Decimal
     image: str | None
 
 class Payment(BaseModel):
-    id: str
-    amount: float
+    id: uuid.UUID
+    amount: Decimal
     payment_date: str
     status: PaymentStatus
     reason_for_payment: str | None
+    title: str | None
 
 class MonthlyRevenueItem(BaseModel):
     month: str
@@ -22,8 +25,8 @@ class MonthlyRevenueItem(BaseModel):
 
 class DashboardSummary(BaseModel):
     total_units: int
-    total_revenue: float
-    total_outstanding: float
+    total_revenue: Decimal
+    total_outstanding: Decimal
     total_projects: int
     total_users: int
     total_payments: int

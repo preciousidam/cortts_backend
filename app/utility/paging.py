@@ -16,5 +16,5 @@ def paginate(
     """
 
     items = session.exec(query.limit(paging.limit).offset(paging.skip)).all()
-    total = session.exec(select(func.count()).select_from(query.subquery())).first() or 0
+    total = session.exec(select(func.count()).select_from(query.subquery())).one() or 0
     return items, total

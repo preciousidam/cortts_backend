@@ -1,8 +1,10 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, date
+from decimal import Decimal, ROUND_HALF_UP
 from uuid import UUID, uuid4
+from typing import Optional, List, Dict, Any, TYPE_CHECKING, Type, cast
 from enum import Enum
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import DateTime, Numeric
 
 from app.models.timestamp_mixin import TimestampMixin
 
@@ -57,18 +59,18 @@ class Status(str, Enum):
 class Unit(SQLModel, TimestampMixin, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str
-    amount: float
-    expected_initial_payment: float
-    discount: float = 0.0
+    amount: Decimal = Field(sa_type=cast(Type[Any], Numeric(18, 2)))
+    expected_initial_payment: Decimal = Field(sa_type=cast(Type[Any], Numeric(18, 2)))
+    discount: Decimal = Field(default=Decimal("0"), sa_type=cast(Type[Any], Numeric(6, 2)))
     comments: Optional[str] = None
     type: Optional[PropertyType] = None
-    purchase_date: datetime | None = None
+    purchase_date: datetime | None = Field(default=None, sa_type=cast(Type[Any], DateTime(timezone=True)))
     installment: int = 1
     payment_plan: bool = False
     client_id: Optional[UUID] = Field(default=None, foreign_key="user.id")
     project_id: Optional[UUID] = Field(default=None, foreign_key="project.id")
     media_files: List["MediaFile"] = Relationship(back_populates="unit")
-    handover_date: Optional[datetime] = None
+    handover_date: Optional[datetime] = Field(default=None, sa_type=cast(Type[Any], DateTime(timezone=True)))
     payment_duration: PaymentDuration | None = PaymentDuration.MONTHLY
     deleted: bool | None = False
     reason_for_delete: Optional[str] | None = None
@@ -92,37 +94,41 @@ class Unit(SQLModel, TimestampMixin, table=True):
 
     @property
     def payment_summary(self) -> Dict[str, Any]:
-        total = self.amount - (self.amount * self.discount / 100)
-        total_deposit = self.total_paid
+
+        def q(val: Decimal) -> Decimal:
+            return val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+        total = self.amount - (self.amount * self.discount / Decimal("100"))
+        total_deposit = Decimal(self.total_paid)
         outstanding = total - total_deposit - self.expected_initial_payment
         total_sch = self.installment
-        installment_amount = round(max(outstanding, 0) / total_sch, 2)
+        installment_amount = q(max(outstanding, Decimal("0")) / Decimal(total_sch)) if total_sch else Decimal("0")
 
-        percentage_paid = round((total_deposit / total) * 100, 2) if total else 0
-        percentage_unpaid = max(0, 100 - percentage_paid)
-        balanced = outstanding <= 0
+        percentage_paid = q((total_deposit / total) * Decimal("100")) if total else Decimal("0")
+        percentage_unpaid = max(Decimal("0"), Decimal("100") - percentage_paid)
+        balanced = outstanding <= Decimal("0")
         more_or_less = "equal"
-        installment_diff = 0.0
+        installment_diff = Decimal("0.00")
 
-        if outstanding < 0:
+        if outstanding < Decimal("0"):
             more_or_less = "overpaid"
             installment_diff = abs(outstanding)
-        elif outstanding > 0:
+        elif outstanding > Decimal("0"):
             more_or_less = "underpaid"
             installment_diff = outstanding
 
         return {
-            "total": round(total, 2),
-            "outstanding": round(outstanding, 2),
-            "total_deposit": round(total_deposit, 2),
-            "total_unpaid": round(total - total_deposit, 2),
+            "total": float(q(total)),
+            "outstanding": float(q(outstanding)),
+            "total_deposit": float(q(total_deposit)),
+            "total_unpaid": float(q(total - total_deposit)),
             "balanced": balanced,
             "more_or_less": more_or_less,
-            "percentage_paid": percentage_paid,
-            "percentage_unpaid": percentage_unpaid,
-            "installment_amount": installment_amount,
+            "percentage_paid": float(q(percentage_paid)),
+            "percentage_unpaid": float(q(percentage_unpaid)),
+            "installment_amount": float(q(installment_amount)),
             "total_sch": total_sch,
-            "installment_diff": round(installment_diff, 2),
+            "installment_diff": float(q(installment_diff)),
             "duration": self.payment_duration.value if self.payment_duration else None
         }
 
@@ -132,14 +138,14 @@ class Unit(SQLModel, TimestampMixin, table=True):
             return []
         total = self.amount - self.discount
         balance = total - self.expected_initial_payment
-        monthly_payment = balance / self.installment
+        monthly_payment = balance / Decimal(self.installment)
         return [
-            {"month": i + 1, "amount": round(monthly_payment, 2)}
+            {"month": i + 1, "amount": float(monthly_payment.quantize(Decimal("0.01")))}
             for i in range(self.installment)
         ]
 
     @property
-    def total_paid(self) -> float:
+    def total_paid(self):
         return sum(p.amount for p in self.payments if p.status.value == PaymentStatus.PAID)
 
     @property

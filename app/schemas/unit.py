@@ -1,8 +1,9 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
+from decimal import Decimal
 from app.models.unit_agent_link import AgentRole
 from app.models.unit import UnitCompletionStatus, Status
 from app.schemas.payment import PaymentRead
@@ -18,9 +19,9 @@ class AgentAssignment(BaseModel):
 
 class UnitBase(BaseModel):
     name: str
-    amount: float
-    expected_initial_payment: float
-    discount: Optional[float] = 0
+    amount: Decimal
+    expected_initial_payment: Decimal
+    discount: Optional[Decimal] = Decimal("0")
     comments: Optional[str] = None
     type: Optional[str] = None
     purchase_date: datetime | None = None
@@ -35,14 +36,18 @@ class UnitBase(BaseModel):
     development_status: Optional[UnitCompletionStatus] = UnitCompletionStatus.NOT_STARTED
     payment_duration: Optional[str] = None  # e.g., "MONTHLY", "QUARTERLY", etc.
 
+    @field_serializer("amount", "expected_initial_payment", "discount")
+    def _serialize_decimal_fields(self, value: Decimal, _info):
+        return float(value) if value is not None else value
+
 class UnitCreate(UnitBase):
     agents: list[AgentAssignment] | None = []
 
 class UnitUpdate(BaseModel):
     name: Optional[str] = None
-    amount: Optional[float] = None
-    expected_initial_payment: Optional[float] = None
-    discount: Optional[float] = None
+    amount: Optional[Decimal] = None
+    expected_initial_payment: Optional[Decimal] = None
+    discount: Optional[Decimal] = None
     comments: Optional[str] = None
     type: Optional[str] = None
     purchase_date: Optional[datetime] = None

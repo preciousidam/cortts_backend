@@ -1,8 +1,9 @@
-from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from enum import Enum
 from uuid import UUID
+from decimal import Decimal
+from pydantic import BaseModel, field_serializer
 
 class PaymentStatus(str, Enum):
     PAID = "paid"
@@ -15,16 +16,20 @@ class Unit(BaseModel):
 
 class PaymentBase(BaseModel):
     reason_for_payment: Optional[str] = 'N/A'
-    amount: float
+    amount: Decimal
     due_date: datetime | None = None
     status: PaymentStatus = PaymentStatus.NOT_PAID
     unit_id: UUID
+
+    @field_serializer("amount")
+    def _serialize_amount(self, value: Decimal, _info):
+        return float(value) if value is not None else value
 
 class PaymentCreate(PaymentBase):
     pass
 
 class PaymentUpdate(BaseModel):
-    amount: Optional[float] = None
+    amount: Optional[Decimal] = None
     due_date: Optional[datetime] = None
     status: Optional[PaymentStatus] = None
     reason_for_payment: Optional[str] = None

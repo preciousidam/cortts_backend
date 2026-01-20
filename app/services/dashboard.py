@@ -1,22 +1,26 @@
 from typing import Any
-from sqlmodel import Session, select, func, and_
-from sqlalchemy import DateTime, cast
+from decimal import Decimal
+from sqlmodel import Session, select , and_, desc, not_
+from sqlalchemy import DateTime, cast, func
 from datetime import datetime,timezone
 from dateutil.relativedelta import relativedelta
 from app.models.payment import Payment, PaymentStatus
 from app.models.project import Project
 from app.models.unit import Unit
 from app.models.user import Role, User
-from app.schemas.dashboard import DashboardSummary, MonthlyRevenueItem, Unit as UnitSchema
+from app.schemas.dashboard import DashboardSummary, MonthlyRevenueItem, Unit as UnitSchema, Payment as PaymentSchema
+from app.schemas.payment import PaymentStatus as PaymentStatusSchema
 
 def get_admin_dashboard(session: Session) -> DashboardSummary:
-    total_units = session.exec(select(func.count()).select_from(Unit).where(Unit.deleted == False)).first() or 0
-    total_payments = session.exec(select(func.count()).select_from(Payment).where(Payment.deleted == False)).first() or 0
-    total_users = session.exec(select(func.count()).select_from(User).where(and_(User.deleted == False, User.role == Role.CLIENT))).first() or 0
-    total_project = session.exec(select(func.count()).select_from(Project).where(Project.deleted == False)).first() or 0
+    total_units = session.exec(select(func.count()).select_from(Unit).where(Unit.deleted == False)).one() or 0
+    total_payments = session.exec(select(func.count()).select_from(Payment).where(Payment.deleted == False)).one() or 0
+    total_users = session.exec(select(func.count()).select_from(User).where(and_(User.deleted == False, User.role == Role.CLIENT))).one() or 0
+    total_projects = session.exec(select(func.count()).select_from(Project).where(Project.deleted == False)).one() or 0
 
-    total_revenue = session.exec(select(func.sum(Payment.amount)).select_from(Payment).where(and_(Payment.deleted == False, Payment.status == PaymentStatus.PAID))).first() or 0
-    total_outstanding = session.exec(select(func.sum(Payment.amount)).select_from(Payment).where(and_(Payment.deleted == False, Payment.status == PaymentStatus.NOT_PAID))).first() or 0
+    total_revenue_result = session.exec(select(func.sum(Payment.amount)).select_from(Payment).where(and_(Payment.deleted == False, Payment.status == PaymentStatus.PAID))).first()
+    total_revenue = total_revenue_result if total_revenue_result is not None else Decimal("0")
+    total_outstanding_result = session.exec(select(func.sum(Payment.amount)).select_from(Payment).where(and_(Payment.deleted == False, Payment.status == PaymentStatus.NOT_PAID))).first()
+    total_outstanding = total_outstanding_result if total_outstanding_result is not None else Decimal("0")
 
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -54,7 +58,7 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
     # format units to match schema
     unit_previews: list[UnitSchema] = [
         UnitSchema(
-            id=str(unit.id),
+            id=unit.id,
             name=unit.name,
             projectName=unit.project.name if unit.project else "",
             status=unit.status.value,
@@ -65,20 +69,35 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
     ]
 
     cutoff = datetime.now(timezone.utc) - relativedelta(days=30)
+    payment_date_column = Payment.payment_date
 
-    recent_payments = session.exec(
-        select(Payment)
-        .where(
-            and_(
-                not Payment.deleted,
-                Payment.status == PaymentStatus.PAID,
-                cast(Payment.payment_date, DateTime(timezone=True)).is_not(None),
-                cast(Payment.payment_date, DateTime(timezone=True)) > cutoff,
+    recent_payments = list(
+        session.exec(
+            select(Payment)
+            .where(
+                and_(
+                    not_(Payment.deleted),
+                    Payment.status == PaymentStatus.PAID,
+                    payment_date_column.is_not(None),
+                    payment_date_column >= cutoff,
+                )
             )
+            .order_by(desc(Payment.payment_date))
+            .limit(5)
+        ).all()
+    )
+
+    recent_payments_schema: list[PaymentSchema] = [
+        PaymentSchema(
+            id=payment.id,
+            amount=payment.amount,
+            payment_date=payment.payment_date.isoformat() if payment.payment_date else "",
+            status=PaymentStatusSchema(payment.status.value),
+            reason_for_payment=payment.reason_for_payment,
+            title=payment.unit.name if payment.unit else None,
         )
-        .order_by(Payment.payment_date.desc())
-        .limit(5)
-    ).all()
+        for payment in recent_payments
+    ]
 
     return DashboardSummary(
         total_units=total_units,
@@ -86,8 +105,8 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         total_users=total_users,
         total_revenue=total_revenue,
         total_outstanding=total_outstanding,
-        total_projects=total_project,
+        total_projects=total_projects,
         monthly_revenue=monthly_revenue_list,
         units=unit_previews,
-        recent_payments=recent_payments,
+        recent_payments=recent_payments_schema,
     )

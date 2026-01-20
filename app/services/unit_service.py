@@ -1,4 +1,5 @@
 from uuid import UUID
+from decimal import Decimal, ROUND_HALF_UP
 from sqlmodel import Session, select, desc
 from app.models.unit import Unit
 from app.models.payment import Payment, PaymentStatus
@@ -116,9 +117,16 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
     session.commit()
 
     # 2) Normalize inputs
-    amount = float(unit.amount or 0)
-    discount_pct = float(unit.discount or 0)/100  # percent (e.g., 12.0 = 12%)
-    initial = float(unit.expected_initial_payment or 0)
+    def to_decimal(value) -> Decimal:
+        if value is None:
+            return Decimal("0")
+        if isinstance(value, Decimal):
+            return value
+        return Decimal(str(value))
+
+    amount = to_decimal(unit.amount)
+    discount_pct = to_decimal(unit.discount) / Decimal("100")
+    initial = to_decimal(unit.expected_initial_payment)
     installments = int(unit.installment or 0)
     plan_enabled = bool(unit.payment_plan)
     purchase_dt = unit.purchase_date or datetime.utcnow()
@@ -131,12 +139,12 @@ def recalculate_payments(session: Session, unit: Unit)  -> None:
     # Recalculate new monthly payments
     total = amount - (discount_pct * amount)
     remaining = total - initial
-    monthly = round(remaining / installments, 2) if installments else 0
+    monthly = (remaining / Decimal(installments)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) if installments else Decimal("0.00")
 
     # If initial payment was made, add it as a paid payment
     if initial > 0:
         session.add(Payment(
-            amount=initial,
+            amount=initial.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
             due_date=purchase_dt,
             status=PaymentStatus.NOT_PAID,
             unit_id=unit.id,
