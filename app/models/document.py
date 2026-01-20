@@ -39,6 +39,7 @@ class DocumentTemplate(SQLModel, TimestampMixin, table=True):
     unit: Optional["Unit"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
     )
+    description: Optional[str] = None
 
 
 class SignedDocument(SQLModel, TimestampMixin, table=True):
@@ -54,3 +55,4 @@ class SignedDocument(SQLModel, TimestampMixin, table=True):
     unit: Optional["Unit"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
     )
+    description: Optional[str] = None

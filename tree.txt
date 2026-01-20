@@ -1,13 +1,26 @@
 .
+├── CHECKLIST.md
 ├── alembic
-│   ├── env.py
 │   ├── README
+│   ├── env.py
 │   ├── script.py.mako
 │   └── versions
+│       ├── 0dc808c981c6_auto.py
 │       ├── 128402406239_auto.py
 │       ├── 1c8ee112cb27_auto.py
+│       ├── 2c257f025b9f_auto.py
+│       ├── 41c55d9a420f_auto.py
+│       ├── 424811927d10_auto.py
+│       ├── 47c102d5f1d1_auto.py
+│       ├── 77e6c4a410b7_auto.py
+│       ├── 79473898a8e5_auto.py
 │       ├── 79603bf64927_auto.py
-│       └── c995fad7d875_auto.py
+│       ├── a340e769f0c2_auto.py
+│       ├── ac8b629a1312_auto.py
+│       ├── b3bf9c823e6a_auto.py
+│       ├── c8ce585b8f47_auto.py
+│       ├── c995fad7d875_auto.py
+│       └── e2ef777b5c4e_auto.py
 ├── alembic.ini
 ├── app
 │   ├── __init__.py
@@ -16,13 +29,14 @@
 │   │   └── routes
 │   │       ├── auth.py
 │   │       ├── company.py
+│   │       ├── dashboard.py
 │   │       ├── document.py
 │   │       ├── notification.py
 │   │       ├── payment.py
 │   │       ├── project.py
 │   │       ├── push_token.py
-│   │       ├── unit_agent_link.py
 │   │       ├── unit.py
+│   │       ├── unit_agent_link.py
 │   │       ├── upload.py
 │   │       └── user.py
 │   ├── auth
@@ -42,11 +56,12 @@
 │   │   ├── project.py
 │   │   ├── push_token.py
 │   │   ├── timestamp_mixin.py
-│   │   ├── unit_agent_link.py
 │   │   ├── unit.py
+│   │   ├── unit_agent_link.py
 │   │   └── user.py
 │   ├── schemas
 │   │   ├── company.py
+│   │   ├── dashboard.py
 │   │   ├── document.py
 │   │   ├── media.py
 │   │   ├── notification.py
@@ -54,16 +69,19 @@
 │   │   ├── payment.py
 │   │   ├── project.py
 │   │   ├── push_token.py
-│   │   ├── unit_agent_link.py
 │   │   ├── unit.py
+│   │   ├── unit_agent_link.py
 │   │   └── user.py
 │   ├── seed
 │   │   ├── seed_admin.py
+│   │   ├── seed_all.py
 │   │   ├── seed_documents.py
 │   │   └── seed_unit_agent.py
 │   ├── services
 │   │   ├── __init__.py
+│   │   ├── ai_service.py
 │   │   ├── company_service.py
+│   │   ├── dashboard.py
 │   │   ├── document_service.py
 │   │   ├── notification_service.py
 │   │   ├── payment_service.py
@@ -77,8 +95,12 @@
 │   └── utility
 │       ├── delete.py
 │       └── paging.py
+├── dockerfile
 ├── makefile
+├── pyproject.toml
+├── readme.md
 ├── requirements.txt
+├── start.sh
 ├── tests
 │   └── services
 │       ├── test_payment_service.py
@@ -87,4 +109,4 @@
 ├── tree.txt
 └── uploaded_artworks
 
-17 directories, 71 files
+17 directories, 93 files

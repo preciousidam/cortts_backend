@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from app.schemas.payment import PaymentStatus
 
 class Unit(BaseModel):
     id: str
@@ -7,6 +8,13 @@ class Unit(BaseModel):
     status: str
     price: float
     image: str | None
+
+class Payment(BaseModel):
+    id: str
+    amount: float
+    payment_date: str
+    status: PaymentStatus
+    reason_for_payment: str | None
 
 class MonthlyRevenueItem(BaseModel):
     month: str
@@ -21,3 +29,4 @@ class DashboardSummary(BaseModel):
     total_payments: int
     monthly_revenue: list[MonthlyRevenueItem]
     units: list[Unit]
+    recent_payments: list[Payment]  # You can define a specific schema for payments if needed

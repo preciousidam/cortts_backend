@@ -47,4 +47,11 @@ seed-all:
 	PYTHONPATH=$(PYTHONPATH) python app/seed/seed_all.py
 
 test:
+	PYTHONPATH=$(PYTHONPATH) ptw -- --maxfail=1 -v
+
+test-once:
 	PYTHONPATH=$(PYTHONPATH) python -m pytest -v
+
+activate-venv:
+	@echo "To activate the virtual environment, run:"
+	@echo "source venv/bin/activate"

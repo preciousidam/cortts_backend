@@ -1,5 +1,6 @@
 from typing import Any
 from sqlmodel import Session, select, func, and_
+from sqlalchemy import DateTime, cast
 from datetime import datetime,timezone
 from dateutil.relativedelta import relativedelta
 from app.models.payment import Payment, PaymentStatus
@@ -63,7 +64,21 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         for unit in first_20_units
     ]
 
-    print(monthly_revenue_list)
+    cutoff = datetime.now(timezone.utc) - relativedelta(days=30)
+
+    recent_payments = session.exec(
+        select(Payment)
+        .where(
+            and_(
+                not Payment.deleted,
+                Payment.status == PaymentStatus.PAID,
+                cast(Payment.payment_date, DateTime(timezone=True)).is_not(None),
+                cast(Payment.payment_date, DateTime(timezone=True)) > cutoff,
+            )
+        )
+        .order_by(Payment.payment_date.desc())
+        .limit(5)
+    ).all()
 
     return DashboardSummary(
         total_units=total_units,
@@ -74,4 +89,5 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         total_projects=total_project,
         monthly_revenue=monthly_revenue_list,
         units=unit_previews,
+        recent_payments=recent_payments,
     )

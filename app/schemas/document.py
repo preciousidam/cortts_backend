@@ -14,6 +14,7 @@ class DocumentTemplateBase(BaseModel):
     media_file_id: UUID
     unit_id: UUID
     deleted_at: Optional[bool] = False
+    description: Optional[str] = None
 
 
 class DocumentTemplateCreate(DocumentTemplateBase):
@@ -33,6 +34,7 @@ class DocumentTemplateUpdate(BaseModel):
     unit_id: Optional[UUID] = None
     deleted_at: Optional[bool] = None
     reason_for_delete: Optional[str] = None
+    description: Optional[str] = None
 
 
 # Signed Document
@@ -42,6 +44,7 @@ class SignedDocumentBase(BaseModel):
     unit_id: UUID
     client_id: Optional[UUID] = None
     agent_id: Optional[UUID] = None
+    description: Optional[str] = None
 
 
 class SignedDocumentCreate(SignedDocumentBase):
@@ -62,6 +65,7 @@ class SignedDocumentUpdate(BaseModel):
     agent_id: Optional[UUID] = None
     deleted_at: Optional[bool] = None
     reason_for_delete: Optional[str] = None
+    description: Optional[str] = None
 
 
 class DocumentKind(str, Enum):
@@ -74,6 +78,7 @@ class DocumentRead(BaseModel):
     unit_id: UUID
     kind: DocumentKind
     created_at: datetime | None = None
+    description: str | None = None
     media_file: MediaFileReadSchema | None = None  # includes file_path, file_type, etc.
 
     model_config = {

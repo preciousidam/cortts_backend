@@ -1,12 +1,14 @@
 from itertools import count
-from sqlmodel import Session, select
+from datetime import datetime, timezone
 from typing import Sequence
 from uuid import UUID
-from datetime import datetime, timezone
-from app.models.document import DocumentTemplate, SignedDocument
+from sqlmodel import Session, select
+from app.models.document import DocumentTemplate, SignedDocument, MediaFile
 from app.schemas.media import MediaFileReadSchema
+from app.schemas.notification import NotificationCreate
 from .notification_service import create_notification
 from app.schemas.document import DocumentKind, DocumentRead, DocumentTemplateCreate, DocumentTemplateRead, ReadAllDocuments, SignedDocumentCreate, SignedDocumentRead, DocumentTemplateUpdate, SignedDocumentUpdate
+from app.services.ai_service import generate_media_description
 
 
 # Document Template
@@ -23,9 +25,13 @@ def create_template(session: Session, data: DocumentTemplateCreate) -> DocumentT
             data_dict["media_file_id"] is None):
         return None
 
+    media_file = session.get(MediaFile, data_dict["media_file_id"])
+    description = data_dict.get("description") or generate_media_description(media_file, "document template")
+
     record = DocumentTemplate(name=data_dict["name"],
                               media_file_id=data_dict["media_file_id"],
-                              unit_id=data_dict["unit_id"])
+                              unit_id=data_dict["unit_id"],
+                              description=description)
     session.add(record)
     session.commit()
     session.refresh(record)
@@ -91,7 +97,12 @@ def create_signed_doc(session: Session, data: SignedDocumentCreate) -> SignedDoc
     :param data: Data model containing the signed document details
     :return: The created SignedDocument object
     """
+    media_file = session.get(MediaFile, data.media_file_id)
+    generated_description = generate_media_description(media_file, "signed document")
     record = SignedDocument(**data.model_dump())
+    if not record.description:
+        record.description = generated_description
+
     session.add(record)
     session.commit()
     session.refresh(record)
@@ -100,29 +111,29 @@ def create_signed_doc(session: Session, data: SignedDocumentCreate) -> SignedDoc
 
         create_notification(
             session,
-            data={
-                "user_id": record.agent_id,
-                "title": "New Document Template Created",
-                "body": f"Document '{record.name}' has been created.",
-                "data": {
+            data=NotificationCreate(
+                user_id=record.agent_id,
+                title="New Document Template Created",
+                body=f"Document '{record.name}' has been created.",
+                data={
                     "template_id": record.id,
                     "type": "document_template_created"
                 }
-            }
+            )
         )
-    
+
     if record.client_id:
         create_notification(
             session,
-            data={
-                "user_id": record.client_id,
-                "title": "New Document Template Created",
-                "body": f"Document '{record.name}' has been created.",
-                "data": {
+            data=NotificationCreate(
+                user_id=record.client_id,
+                title="New Document Template Created",
+                body=f"Document '{record.name}' has been created.",
+                data={
                     "template_id": record.id,
                     "type": "document_template_created"
                 }
-            }
+            )
         )
 
 
@@ -213,6 +224,7 @@ def get_documents_for_unit(session: Session, unit_id: UUID) -> ReadAllDocuments:
                 unit_id=t.unit_id,
                 kind=DocumentKind.TEMPLATE,
                 created_at=t.created_at,
+                description=t.description,
                 media_file=MediaFileReadSchema.model_validate(t.media_file.model_dump()) if t.media_file else None,
             )
         )
@@ -226,6 +238,7 @@ def get_documents_for_unit(session: Session, unit_id: UUID) -> ReadAllDocuments:
                 unit_id=s.unit_id,
                 kind=DocumentKind.SIGNED,
                 created_at=s.created_at,
+                description=s.description,
                 media_file=MediaFileReadSchema.model_validate(s.media_file.model_dump()) if s.media_file else None,
             )
         )

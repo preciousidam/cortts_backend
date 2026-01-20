@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     R2_ENDPOINT_URL:  Optional[str] = Field(default=None, alias="R2_ENDPOINT_URL")
     R2_ACCESS_TOKEN:  Optional[str] = Field(default=None, alias="R2_ACCESS_TOKEN")
     R2_PUBLIC_URL:  Optional[str] = Field(default=None, alias="R2_PUBLIC_URL")
+    OPENAI_API_KEY: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
+    OPENAI_MODEL: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     ALLOWED_ORIGINS: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000"], alias="ALLOWED_ORIGINS"
     )

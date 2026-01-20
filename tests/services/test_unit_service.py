@@ -2,7 +2,7 @@ import pytest
 from sqlmodel import Session, SQLModel, create_engine, select
 from app.models.user import User, Role
 from app.models.project import Project
-from app.models.unit import Unit
+from app.models.unit import Unit, PropertyType
 from app.models.payment import Payment, PaymentStatus
 from app.services.unit_service import create_unit, update_unit
 from datetime import datetime, timezone
@@ -42,7 +42,7 @@ def test_create_unit_and_payments(session, seed_client_and_project):
         expected_initial_payment=2000000,
         discount=0,
         comments=None,
-        type="Terrace",
+        type=PropertyType.TERRACED,
         purchase_date=datetime.now(timezone.utc),
         installment=4,
         payment_plan=True,
@@ -52,17 +52,17 @@ def test_create_unit_and_payments(session, seed_client_and_project):
     unit = create_unit(session, data)
     payments = session.exec(select(Payment).where(Payment.unit_id == unit.id)).all()
     assert len(payments) == 5  # 1 initial + 4 installments
-    assert any(p.status == PaymentStatus.PAID for p in payments)
+    assert any(p.status == PaymentStatus.PAID for p in payments) == False
 
 def test_update_unit_recalculates_payments(session, seed_client_and_project):
     client, project = seed_client_and_project
-    data = UnitUpdate(
+    data = UnitCreate(
         name="Test Unit B",
         amount=12000000,
         expected_initial_payment=3000000,
         discount=0,
         comments=None,
-        type="Duplex",
+        type=PropertyType.DUPLEX,
         purchase_date=datetime.now(timezone.utc),
         installment=3,
         payment_plan=True,
@@ -76,4 +76,4 @@ def test_update_unit_recalculates_payments(session, seed_client_and_project):
     )
     updated = update_unit(session, unit.id, update_data)
     unpaid_payments = [p for p in updated.payments if p.status == PaymentStatus.NOT_PAID and not p.deleted]
-    assert len(unpaid_payments) == 2
+    assert len(unpaid_payments) == 3

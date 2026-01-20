@@ -32,7 +32,6 @@ class PaymentUpdate(BaseModel):
 class PaymentRead(PaymentBase):
     id: UUID
     deleted: bool
-    reason_for_delete: Optional[str]
     unit: Unit
     created_at: datetime
     updated_at: datetime
