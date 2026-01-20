@@ -62,7 +62,7 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
             name=unit.name,
             projectName=unit.project.name if unit.project else "",
             status=unit.status.value,
-            price=unit.amount,
+            price=float(unit.amount),
             image=unit.images[0] if unit.images else None,
         )
         for unit in first_20_units
@@ -90,7 +90,7 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
     recent_payments_schema: list[PaymentSchema] = [
         PaymentSchema(
             id=payment.id,
-            amount=payment.amount,
+            amount=float(payment.amount),
             payment_date=payment.payment_date.isoformat() if payment.payment_date else "",
             status=PaymentStatusSchema(payment.status.value),
             reason_for_payment=payment.reason_for_payment,
@@ -103,8 +103,8 @@ def get_admin_dashboard(session: Session) -> DashboardSummary:
         total_units=total_units,
         total_payments=total_payments,
         total_users=total_users,
-        total_revenue=total_revenue,
-        total_outstanding=total_outstanding,
+        total_revenue=float(total_revenue),
+        total_outstanding=float(total_outstanding),
         total_projects=total_projects,
         monthly_revenue=monthly_revenue_list,
         units=unit_previews,
