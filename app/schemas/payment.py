@@ -19,7 +19,6 @@ class PaymentBase(BaseModel):
     amount: Decimal
     due_date: datetime | None = None
     status: PaymentStatus = PaymentStatus.NOT_PAID
-    payment_date: datetime | None = None
     unit_id: UUID
     media_id: UUID | None = None
     @field_serializer("amount")
@@ -39,6 +38,7 @@ class PaymentUpdate(BaseModel):
 class PaymentRead(PaymentBase):
     id: UUID
     deleted: bool
+    payment_date: datetime | None = None
     unit: Unit
     created_at: datetime
     updated_at: datetime

@@ -62,6 +62,21 @@ def unit(session: Session) -> Unit:
     return unit
 
 
+@pytest.fixture
+def media_file(session: Session, unit: Unit) -> MediaFile:
+    media = MediaFile(
+        file_type="image/png",
+        file_name="receipt.png",
+        file_path="https://example.com/receipt.png",
+        file_size=123,
+        unit_id=unit.id,
+    )
+    session.add(media)
+    session.commit()
+    session.refresh(media)
+    return media
+
+
 def test_create_payment_persists_with_uuid_conversion(session: Session, unit: Unit):
     payment_data = PaymentCreate(
         reason_for_payment="First",
@@ -76,6 +91,36 @@ def test_create_payment_persists_with_uuid_conversion(session: Session, unit: Un
     assert fetched.unit_id == unit.id
     assert fetched.amount == 500_000
     assert fetched.status == PaymentStatus.NOT_PAID
+
+
+def test_create_paid_payment_requires_receipt(session: Session, unit: Unit):
+    payment_data = PaymentCreate(
+        reason_for_payment="Paid without receipt",
+        amount=500_000,
+        unit_id=unit.id,
+        status=PaymentStatus.PAID,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        create_payment(session, payment_data)
+
+    assert exc.value.status_code == 400
+    assert "Media ID" in exc.value.detail
+
+
+def test_create_paid_payment_with_receipt_sets_payment_date(session: Session, unit: Unit, media_file: MediaFile):
+    payment_data = PaymentCreate(
+        reason_for_payment="Paid with receipt",
+        amount=500_000,
+        unit_id=unit.id,
+        status=PaymentStatus.PAID,
+        media_id=media_file.id,
+    )
+
+    payment = create_payment(session, payment_data)
+
+    assert payment.media_id == media_file.id
+    assert payment.payment_date is not None
 
 
 def test_get_all_payments_excludes_deleted(session: Session, unit: Unit):
@@ -155,21 +200,20 @@ def test_update_payment_paid_requires_receipt(session: Session, unit: Unit):
 
 
 def test_update_payment_to_paid_sets_payment_date_when_media_present(
-    session: Session, unit: Unit
+    session: Session, unit: Unit, media_file: MediaFile
 ):
     payment = create_payment(
         session,
         PaymentCreate(reason_for_payment="To Paid", amount=400, unit_id=unit.id),
     )
-    receipt_id = uuid4()
-    payment.media_id = receipt_id
-    session.add(payment)
-    session.commit()
-
-    updated = update_payment(session, payment.id, PaymentUpdate(status=PaymentStatus.PAID))
+    updated = update_payment(
+        session,
+        payment.id,
+        PaymentUpdate(status=PaymentStatus.PAID, media_id=media_file.id),
+    )
 
     assert updated.payment_date is not None
-    assert updated.media_id == receipt_id
+    assert updated.media_id == media_file.id
 
 
 def test_update_payment_to_not_paid_clears_payment_date_and_media(session: Session, unit: Unit):

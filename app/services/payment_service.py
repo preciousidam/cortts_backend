@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlmodel import Sequence, Session, select
 from app.models.payment import Payment
+from app.models.document import MediaFile
 from uuid import UUID
 from datetime import datetime, timezone
 
@@ -10,6 +11,8 @@ from app.schemas.payment import PaymentCreate, PaymentUpdate, PaymentRead
 
 
 def _as_uuid(value: str | UUID) -> UUID:
+    if value is None:
+        return None  # type: ignore[return-value]
     return value if isinstance(value, UUID) else UUID(str(value))
 
 
@@ -17,6 +20,21 @@ def create_payment(session: Session, data: PaymentCreate) -> Payment:
     data_dict = data.model_dump()
     data_dict["unit_id"] = _as_uuid(data_dict["unit_id"])  # ensure UUID type
     payment = Payment(**data_dict)
+    if payment.status == "paid" and not payment.media_id:
+        raise HTTPException(status_code=400, detail="Media ID (receipt) is required for paid payments")
+    elif payment.status == "paid" and payment.media_id:
+        payment.payment_date = datetime.now(timezone.utc)
+        media = session.get(MediaFile, _as_uuid(payment.media_id))
+        if not media:
+            raise HTTPException(status_code=404, detail="Media file not found")
+    elif payment.status in ["not_paid", "overdue"]:
+        payment.payment_date = None
+        payment.media_id = None
+    elif payment.media_id:
+        media = session.get(MediaFile, _as_uuid(payment.media_id))
+        if not media:
+            raise HTTPException(status_code=404, detail="Media file not found")
+
     session.add(payment)
     session.commit()
     session.refresh(payment)
@@ -45,10 +63,20 @@ def update_payment(session: Session, payment_id: str, data: PaymentUpdate) -> Pa
             payment.payment_date = datetime.now(timezone.utc)
             if not payment.media_id and not data.media_id:
                 raise HTTPException(status_code=400, detail="Media ID (receipt) is required for paid payments")
+            # if data.media_id check if media_id is valid
+            if data.media_id:
+                media = session.get(MediaFile, _as_uuid(data.media_id))
+                if not media:
+                    raise HTTPException(status_code=404, detail="Media file not found")
             setattr(payment, field, value)
         elif field == 'status' and (value == "not_paid" or value == "overdue"):
             payment.payment_date = None
             payment.media_id = None
+            setattr(payment, field, value)
+        elif field == 'media_id':
+            media = session.get(MediaFile, _as_uuid(value))
+            if not media:
+                raise HTTPException(status_code=404, detail="Media file not found")
             setattr(payment, field, value)
         else:
             setattr(payment, field, value)
