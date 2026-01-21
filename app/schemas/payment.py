@@ -21,7 +21,7 @@ class PaymentBase(BaseModel):
     status: PaymentStatus = PaymentStatus.NOT_PAID
     payment_date: datetime | None = None
     unit_id: UUID
-
+    media_id: UUID | None = None
     @field_serializer("amount")
     def _serialize_amount(self, value: Decimal, _info):
         return float(value) if value is not None else value
@@ -34,6 +34,7 @@ class PaymentUpdate(BaseModel):
     due_date: Optional[datetime] = None
     status: Optional[PaymentStatus] = None
     reason_for_payment: Optional[str] = None
+    media_id: UUID | None = None
 
 class PaymentRead(PaymentBase):
     id: UUID
