@@ -19,6 +19,7 @@ class PaymentBase(BaseModel):
     amount: Decimal
     due_date: datetime | None = None
     status: PaymentStatus = PaymentStatus.NOT_PAID
+    payment_date: datetime | None = None
     unit_id: UUID
 
     @field_serializer("amount")
