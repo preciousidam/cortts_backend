@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlmodel import Sequence, Session, select
 from app.models.payment import Payment
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.schemas.paging import Paging
 from app.utility.paging import paginate
@@ -42,12 +42,14 @@ def update_payment(session: Session, payment_id: str, data: PaymentUpdate) -> Pa
         return None
     for field, value in data.model_dump(exclude_unset=True).items():
         if field == 'status' and value == "paid":
-            payment.payment_date = datetime.now()
-            if not payment.media_id:
+            payment.payment_date = datetime.now(timezone.utc)
+            if not payment.media_id and not data.media_id:
                 raise HTTPException(status_code=400, detail="Media ID (receipt) is required for paid payments")
+            setattr(payment, field, value)
         elif field == 'status' and (value == "not_paid" or value == "overdue"):
             payment.payment_date = None
             payment.media_id = None
+            setattr(payment, field, value)
         else:
             setattr(payment, field, value)
 
