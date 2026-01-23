@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     OPENAI_MODEL: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     ALLOWED_ORIGINS: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "https://cortts-dev-app-ywuwh.ondigitalocean.app"], alias="ALLOWED_ORIGINS"
+        default_factory=lambda: ["http://localhost", "https://cortts-frontend-app-33nf9.ondigitalocean.app"], alias="ALLOWED_ORIGINS"
     )
 
     @field_validator("ALLOWED_ORIGINS", mode="before")
