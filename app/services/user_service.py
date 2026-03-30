@@ -8,6 +8,7 @@ import random
 from typing import Any, Union
 from app.schemas.paging import Paging
 from app.schemas.user import UserCreate, RegisterRequest, UserUpdate
+from app.services.email_service import send_password_reset_email, send_verification_email
 from app.utility.paging import paginate
 
 
@@ -45,7 +46,7 @@ def create_user(session: Session, data: Union[UserCreate, RegisterRequest]) -> U
     session.add(user)
     session.commit()
     session.refresh(user)
-    print(f"[DEBUG] Verification code for {user.email}: {code}")
+    send_verification_email(user.email, code)
     return user
 
 def authenticate_user(session: Session, email: str, password: str)  -> User | None:
@@ -120,15 +121,14 @@ def soft_delete_user(session: Session, user_id: str, reason: str) -> User | None
 def forgot_password(session: Session, email: EmailStr) -> User | None:
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
+        return None
 
     # Generate a new verification code for password reset
     code = str(random.randint(100000, 999999))
     user.verification_code = code
     session.add(user)
     session.commit()
-
-    print(f"[DEBUG] Password reset code for {user.email}: {code}")
+    send_password_reset_email(user.email, code)
     return user
 
 def reset_password(session: Session, email: EmailStr, code: str, new_password: str) -> User | None:

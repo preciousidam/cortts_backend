@@ -3,18 +3,30 @@ from typing import Optional
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = Field(default=None, alias="DATABASE_URL")
-    SECRET_KEY:  Optional[str] = Field(default=None, alias="SECRET_KEY")
-    ACCESS_TOKEN_EXPIRE_MINUTES:  Optional[int] = Field(default=None, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
-    R2_ACCESS_KEY_ID:  Optional[str] = Field(default=None, alias="R2_ACCESS_KEY_ID")
-    R2_SECRET_ACCESS_KEY:  Optional[str] = Field(default=None, alias="R2_SECRET_ACCESS_KEY")
-    R2_BUCKET_NAME:  Optional[str] = Field(default=None, alias="R2_BUCKET_NAME")
-    R2_ENDPOINT_URL:  Optional[str] = Field(default=None, alias="R2_ENDPOINT_URL")
-    R2_ACCESS_TOKEN:  Optional[str] = Field(default=None, alias="R2_ACCESS_TOKEN")
-    R2_PUBLIC_URL:  Optional[str] = Field(default=None, alias="R2_PUBLIC_URL")
+    SECRET_KEY: Optional[str] = Field(default=None, alias="SECRET_KEY")
+    ACCESS_TOKEN_EXPIRE_MINUTES: Optional[int] = Field(default=None, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    R2_ACCESS_KEY_ID: Optional[str] = Field(default=None, alias="R2_ACCESS_KEY_ID")
+    R2_SECRET_ACCESS_KEY: Optional[str] = Field(default=None, alias="R2_SECRET_ACCESS_KEY")
+    R2_BUCKET_NAME: Optional[str] = Field(default=None, alias="R2_BUCKET_NAME")
+    R2_ENDPOINT_URL: Optional[str] = Field(default=None, alias="R2_ENDPOINT_URL")
+    R2_ACCESS_TOKEN: Optional[str] = Field(default=None, alias="R2_ACCESS_TOKEN")
+    R2_PUBLIC_URL: Optional[str] = Field(default=None, alias="R2_PUBLIC_URL")
     OPENAI_API_KEY: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     OPENAI_MODEL: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
+    EMAIL_BACKEND: str = Field(default="smtp", alias="EMAIL_BACKEND")
+    EMAIL_ENABLED: bool = Field(default=True, alias="EMAIL_ENABLED")
+    EMAIL_FROM_EMAIL: str = Field(default="no-reply@cortts.local", alias="EMAIL_FROM_EMAIL")
+    EMAIL_FROM_NAME: str = Field(default="Cortts", alias="EMAIL_FROM_NAME")
+    EMAIL_EXPOSE_VERIFICATION_CODE: bool = Field(default=False, alias="EMAIL_EXPOSE_VERIFICATION_CODE")
+    SMTP_HOST: Optional[str] = Field(default="localhost", alias="SMTP_HOST")
+    SMTP_PORT: int = Field(default=1025, alias="SMTP_PORT")
+    SMTP_USERNAME: Optional[str] = Field(default=None, alias="SMTP_USERNAME")
+    SMTP_PASSWORD: Optional[str] = Field(default=None, alias="SMTP_PASSWORD")
+    SMTP_USE_TLS: bool = Field(default=False, alias="SMTP_USE_TLS")
+    SMTP_USE_SSL: bool = Field(default=False, alias="SMTP_USE_SSL")
     ALLOWED_ORIGINS: list[str] = Field(
         default_factory=lambda: ["http://localhost", "https://cortts-frontend-app-33nf9.ondigitalocean.app"], alias="ALLOWED_ORIGINS"
     )
@@ -26,6 +38,15 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra="forbid")
+    @field_validator("EMAIL_BACKEND")
+    @classmethod
+    def validate_email_backend(cls, v: str) -> str:
+        backend = v.strip().lower()
+        if backend not in {"console", "smtp"}:
+            raise ValueError("EMAIL_BACKEND must be either 'console' or 'smtp'.")
+        return backend
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="forbid")
+
 
 settings = Settings()

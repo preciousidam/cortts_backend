@@ -35,7 +35,25 @@ def deterministic_code(monkeypatch):
     monkeypatch.setattr(user_service.random, "randint", lambda _a, _b: 123456)
 
 
-def test_create_user_persists_and_hashes_password(session: Session):
+@pytest.fixture(autouse=True)
+def stub_email_delivery(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(user_service, "send_verification_email", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(user_service, "send_password_reset_email", lambda *_args, **_kwargs: None)
+
+
+def test_create_user_persists_and_hashes_password(session: Session, monkeypatch: pytest.MonkeyPatch):
+    sent_payload: dict[str, str] = {}
+
+    def fake_send_verification_email(to_email: str, verification_code: str) -> None:
+        sent_payload["to_email"] = to_email
+        sent_payload["verification_code"] = verification_code
+
+    monkeypatch.setattr(
+        user_service,
+        "send_verification_email",
+        fake_send_verification_email,
+    )
+
     request = RegisterRequest(
         email="TEST@Example.com",
         password="Secret123",
@@ -50,6 +68,10 @@ def test_create_user_persists_and_hashes_password(session: Session):
     assert user.verification_code == "123456"
     assert verify_password("Secret123", user.hashed_password)
     assert user.is_verified is False
+    assert sent_payload == {
+        "to_email": "test@example.com",
+        "verification_code": "123456",
+    }
 
 
 def test_create_user_requires_mandatory_fields(session: Session):
@@ -216,7 +238,19 @@ def test_soft_delete_user_sets_flags(session: Session):
     assert deleted.deleted_at is not None
 
 
-def test_forgot_password_updates_verification_code(session: Session):
+def test_forgot_password_updates_verification_code(session: Session, monkeypatch: pytest.MonkeyPatch):
+    sent_payload: dict[str, str] = {}
+
+    def fake_send_password_reset_email(to_email: str, verification_code: str) -> None:
+        sent_payload["to_email"] = to_email
+        sent_payload["verification_code"] = verification_code
+
+    monkeypatch.setattr(
+        user_service,
+        "send_password_reset_email",
+        fake_send_password_reset_email,
+    )
+
     user = create_user(
         session,
         RegisterRequest(
@@ -234,6 +268,28 @@ def test_forgot_password_updates_verification_code(session: Session):
 
     assert updated.verification_code == "123456"
     assert updated.id == user.id
+    assert sent_payload == {
+        "to_email": "resetme@example.com",
+        "verification_code": "123456",
+    }
+
+
+def test_forgot_password_returns_none_for_unknown_email(session: Session, monkeypatch: pytest.MonkeyPatch):
+    sent = {"called": False}
+
+    def fake_send_password_reset_email(_to_email: str, _verification_code: str) -> None:
+        sent["called"] = True
+
+    monkeypatch.setattr(
+        user_service,
+        "send_password_reset_email",
+        fake_send_password_reset_email,
+    )
+
+    result = forgot_password(session, "missing@example.com")
+
+    assert result is None
+    assert sent["called"] is False
 
 
 def test_reset_password_validates_code(session: Session):

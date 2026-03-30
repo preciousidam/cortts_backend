@@ -22,6 +22,12 @@ history:
 run:
 	python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
+mail-dev-up:
+	docker compose -f docker-compose.dev.yml up -d mailpit
+
+mail-dev-down:
+	docker compose -f docker-compose.dev.yml down
+
 # Clean up pycaches
 clean:
 	find . -type d -name __pycache__ -exec rm -r {} +

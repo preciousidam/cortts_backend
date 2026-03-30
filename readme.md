@@ -73,6 +73,9 @@ tree.txt              # Project file tree
 
 4. **Configure Environment Variables**
    - Copy `.env.example` to `.env` and fill in required secrets (DB, Cloudflare R2, JWT, etc).
+   - Email delivery supports two modes:
+     - Local/dev: use Mailpit with `EMAIL_BACKEND=smtp`, `SMTP_HOST=localhost`, and `SMTP_PORT=1025`.
+     - Production: keep `EMAIL_BACKEND=smtp` and configure real SMTP credentials so verification and reset emails are delivered to users.
 
 5. **Run Database Migrations**
    ```sh
@@ -86,6 +89,7 @@ tree.txt              # Project file tree
 
 7. **Start the Server**
    ```sh
+   make mail-dev-up
    make run
    # OR
    uvicorn app.main:app --reload
@@ -103,6 +107,39 @@ tree.txt              # Project file tree
   make test
   ```
 - Add more test files in `tests/` as needed.
+
+---
+
+## ✉️ Email Delivery
+
+The auth flow sends emails for:
+
+- account verification after registration
+- password reset requests
+
+Supported configuration:
+
+```env
+EMAIL_ENABLED=true
+EMAIL_BACKEND=smtp
+EMAIL_FROM_EMAIL=no-reply@cortts.local
+EMAIL_FROM_NAME=Cortts
+EMAIL_EXPOSE_VERIFICATION_CODE=false
+
+# Local Mailpit defaults
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_USE_TLS=false
+SMTP_USE_SSL=false
+```
+
+Notes:
+
+- Local development can use Mailpit with `make mail-dev-up`, then view captured emails at `http://localhost:8025`.
+- Production also uses `smtp`, but with your provider's host, port, credentials, and TLS settings.
+- The API only returns the verification code from `/register` when `EMAIL_EXPOSE_VERIFICATION_CODE=true`.
 
 ---
 
